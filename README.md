@@ -100,4 +100,12 @@ cmake --build build
 
 ## Process Flow
 
-$$\begin{matrix} K, M \xrightarrow{\text{Köşegen Dönüşüm}} S = M^{-1/2} K M^{-1/2} \\ \downarrow \\ A = S + I \xrightarrow{\text{LDLT Ayrışımı}} A = L D L^T \\ \downarrow \\ \text{25 x Iter: } V_k = A^{-1} Q_k \xrightarrow{\text{QR}} Q_{k+1} \\ \downarrow \\ T = Q^T S Q \xrightarrow{\text{Rayleigh-Ritz}} \text{eig}(T) \rightarrow \lambda \\ \downarrow \\ \omega = \sqrt{\lambda} \end{matrix}$$
+$$\begin{matrix} K, M \xrightarrow{\text{Diagonal Transformation}} S = M^{-1/2} K M^{-1/2} \end{matrix}$$  
+
+$$\begin{matrix} A = S + I \xrightarrow{\text{LDLT Ayrışımı}} A = L D L^T \end{matrix}$$  
+
+$$\begin{matrix} \text{25 x Iter: } V_k = A^{-1} Q_k \xrightarrow{\text{QR}} Q_{k+1} \end{matrix}$$  
+
+$$\begin{matrix} T = Q^T S Q \xrightarrow{\text{Rayleigh-Ritz}} \text{eig}(T) \rightarrow \lambda \end{matrix}$$  
+
+$$\begin{matrix} \omega = \sqrt{\lambda} \end{matrix}$$  
