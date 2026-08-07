@@ -29,7 +29,7 @@ void fillElement(
     const double radius
 );
 
-std::vector<std::vector<double>> getStriffnessMatrix(
+std::vector<std::vector<double>> getStiffnessMatrix(
     std::size_t dim,
     const double stiffConst,
     const double radius,

@@ -138,7 +138,7 @@ void fillElement(
     return;
 }
 
-std::vector<std::vector<double>> getStriffnessMatrix(
+std::vector<std::vector<double>> getStiffnessMatrix(
     std::size_t dim,
     const double stiffConst,
     const double radius,
@@ -192,7 +192,7 @@ Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
     std::vector<Eigen::Triplet<double>> triplets;
     triplets.reserve(dim * 45);
 
-    std::vector<std::vector<double>> denseK = getStriffnessMatrix(dim, stiffConst, radius, massNum);
+    std::vector<std::vector<double>> denseK = getStiffnessMatrix(dim, stiffConst, radius, massNum);
 
     for (std::size_t i = 0; i < dim; ++i) {
         for (std::size_t j = 0; j < dim; ++j) {
