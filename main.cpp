@@ -61,7 +61,8 @@ int main() {
     Eigen::SparseMatrix<double> sparseK = getSparseStiffnessMatrix(dim, stiffnessConst, radius, static_cast<int>(massNum));
 
     std::cout << "Calculating natural frequency using sparse eigenvalue solver...\n";
-    const double receptanceFrequency = getSecondNaturalFrequency(sparseM, sparseK);
+    // modeIndex = 1 corresponds to analysisResult[2][1][1] (2nd mode / 1st flexible mode)
+    const double receptanceFrequency = getNaturalFrequency(sparseM, sparseK, 2);
     std::cout << "Calculated natural frequency: " << receptanceFrequency << " rad/s\n\n";
 
     const double w = receptanceFrequency;

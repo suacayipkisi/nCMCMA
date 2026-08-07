@@ -17,9 +17,10 @@
 
 #include "stdEigenValueSolver.h"
 
-double getSecondNaturalFrequency(
+double getNaturalFrequency(
     const Eigen::SparseMatrix<double>& M,
-    const Eigen::SparseMatrix<double>& K
+    const Eigen::SparseMatrix<double>& K,
+    std::size_t modeIndex
 ) {
     const std::size_t dim = K.rows();
     if (dim == 0) return 0.0;
@@ -61,7 +62,7 @@ double getSecondNaturalFrequency(
         return 0.0;
     }
 
-    constexpr int numVecs = 3;
+    const int numVecs = static_cast<int>(std::max(std::size_t(3), modeIndex + 2));
     Eigen::MatrixXd Q = Eigen::MatrixXd::Random(dim, numVecs);
     Eigen::HouseholderQR<Eigen::MatrixXd> qr(Q);
     Q = qr.householderQ() * Eigen::MatrixXd::Identity(dim, numVecs);
@@ -79,16 +80,15 @@ double getSecondNaturalFrequency(
     for (int col = 0; col < numVecs; ++col) {
         SQ.col(col) = S * Q.col(col);
     }
-    Eigen::Matrix3d T = Q.transpose() * SQ;
+    Eigen::MatrixXd T = Q.transpose() * SQ;
 
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> es3(T);
-    Eigen::Vector3d evals = es3.eigenvalues();
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(T);
+    Eigen::VectorXd evals = es.eigenvalues();
 
-    double lambda2 = evals(1);
-    if (evals(0) > 1e-4) {
-        lambda2 = evals(0);
-    }
-    return std::sqrt(std::max(0.0, lambda2));
+    std::size_t idx = std::min(modeIndex, static_cast<std::size_t>(evals.size() - 1));
+    double lambda = evals(static_cast<Eigen::Index>(idx));
+
+    return std::sqrt(std::max(0.0, lambda));
 }
 
 std::vector<std::vector<std::complex<double>>> solveEigenValueProblem(const std::vector<std::vector<double>>& probM){

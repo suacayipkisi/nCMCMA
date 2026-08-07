@@ -13,7 +13,8 @@ std::vector<std::vector<std::complex<double>>> solveEigenValueProblem(const std:
 
 std::vector<std::vector<std::vector<std::complex<double>>>> getAnalysisResult(const std::vector<std::vector<double>>& matrixE);
 
-double getSecondNaturalFrequency(
+double getNaturalFrequency(
     const Eigen::SparseMatrix<double>& M,
-    const Eigen::SparseMatrix<double>& K
+    const Eigen::SparseMatrix<double>& K,
+    std::size_t modeIndex = 1
 );
