@@ -1,3 +1,5 @@
 .vscode/
 build/
 data/
+receptance_matrix.txt
+displacement.txt

@@ -8,6 +8,8 @@
 
 #include "receptanceMatrix.h"
 #include "../matrixOperations/stdMatrixOperations.h"
+#include <omp.h>
+#include <stdexcept>
 
 std::vector<std::vector<std::complex<double>>> getReceptanceMatrix(
     const double givenFrequency,
@@ -16,35 +18,38 @@ std::vector<std::vector<std::complex<double>>> getReceptanceMatrix(
     const std::vector<std::vector<double>>& rayleightDampingMatrix
 ){
     const std::size_t T = massMatrix.size();
-    std::vector<std::vector<double>> min_w2_M = 
-        multbyValue_Mxval(massMatrix, ((-1.0) * givenFrequency * givenFrequency));
-    std::vector<std::vector<std::complex<double>>> j_w_C = 
-        multCompl_MxcVal(rayleightDampingMatrix, (std::complex<double>(0, 1) * givenFrequency));
-    std::vector<std::vector<std::complex<double>>> rMatrix = 
-        sumComplex_MxM(sumComplex_MxM(min_w2_M, j_w_C), stiffnessMatrix);
+    const double w2 = givenFrequency * givenFrequency;
+    const std::complex<double> j_w(0.0, givenFrequency);
+
+    const double alpha = 0.02287;
+    const double beta = 0.00000578;
+    const bool hasC = !rayleightDampingMatrix.empty() && rayleightDampingMatrix.size() == T;
 
     Eigen::MatrixXcd systemMatrix(T, T);
-    systemMatrix.setZero();
+
+    #pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i < T; ++i) {
         for (std::size_t j = 0; j < T; ++j) {
-            systemMatrix(i, j) = rMatrix[i][j];
+            double m_val = (i == j) ? massMatrix[i][i] : 0.0;
+            double c_val = hasC ? rayleightDampingMatrix[i][j] : (m_val * alpha + stiffnessMatrix[i][j] * beta);
+            systemMatrix(i, j) = stiffnessMatrix[i][j] - w2 * m_val + j_w * c_val;
         }
     }
 
-    Eigen::MatrixXcd identity = Eigen::MatrixXcd::Identity(T, T);
-    Eigen::FullPivLU<Eigen::MatrixXcd> lu(systemMatrix);
-    if (lu.rank() < static_cast<Eigen::Index>(T)) {
-        throw std::runtime_error("[ERROR]: Matrix is singular and cannot be inverted.");
-    }
+    Eigen::PartialPivLU<Eigen::MatrixXcd> lu(systemMatrix);
+    systemMatrix = Eigen::MatrixXcd(); // Free 9.6 GB RAM immediately!
 
-    Eigen::MatrixXcd inverseMatrix = lu.solve(identity);
+    Eigen::MatrixXcd inverseMatrix = lu.solve(Eigen::MatrixXcd::Identity(T, T));
 
     std::vector<std::vector<std::complex<double>>> receptanceMatrix(T, std::vector<std::complex<double>>(T, 0.0));
+    #pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i < T; ++i) {
         for (std::size_t j = 0; j < T; ++j) {
             receptanceMatrix[i][j] = inverseMatrix(i, j);
         }
     }
+
+    inverseMatrix = Eigen::MatrixXcd(); // Free 9.6 GB RAM immediately!
 
     return receptanceMatrix;
 }

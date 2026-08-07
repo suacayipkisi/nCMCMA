@@ -4,6 +4,12 @@
 #include <array>
 #include <cstddef>
 
+#if __has_include(<Eigen/Sparse>)
+#include <Eigen/Sparse>
+#elif __has_include(<eigen3/Eigen/Sparse>)
+#include <eigen3/Eigen/Sparse>
+#endif
+
 void fillDiag(
     const std::array<int, 3>& elementPosition,
     const int elementID,
@@ -24,6 +30,13 @@ void fillElement(
 );
 
 std::vector<std::vector<double>> getStriffnessMatrix(
+    std::size_t dim,
+    const double stiffConst,
+    const double radius,
+    const int massNum
+);
+
+Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
     std::size_t dim,
     const double stiffConst,
     const double radius,

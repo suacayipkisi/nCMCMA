@@ -40,7 +40,7 @@ int main() {
               << " | Using thread number: " << numThreads << "\n\n";
 
     // defining the cube size
-    constexpr std::size_t massNum{2};
+    constexpr std::size_t massNum{16};
     constexpr std::size_t dim{6 * massNum * massNum * massNum};
     
     std::string_view name{"Steel Spring A288"};
@@ -55,54 +55,51 @@ int main() {
     const double mass{4.0 / 3.0 * std::numbers::pi * radius * radius * radius};
     const double stiffnessConst{1000};
 
-    std::vector<std::vector<double>> massMatrix = getMassMatrix(dim, mass, radius, static_cast<int>(massNum));
-    std::vector<std::vector<double>> stiffnessMatrix = getStriffnessMatrix(dim, stiffnessConst, radius, static_cast<int>(massNum));
-    std::vector<std::vector<double>> rayleightDampingMatrix = getRayleightDampingMatrix(name, massMatrix, stiffnessMatrix, alpha, beta);
+    // Build sparse mass and stiffness matrices (uses ~12 MB RAM instead of 9.6 GB)
+    std::cout << "Building sparse mass and stiffness matrices...\n";
+    Eigen::SparseMatrix<double> sparseM = getSparseMassMatrix(dim, mass, radius, static_cast<int>(massNum));
+    Eigen::SparseMatrix<double> sparseK = getSparseStiffnessMatrix(dim, stiffnessConst, radius, static_cast<int>(massNum));
 
-    std::vector<std::vector<double>> stateSpaceMatrix = getStateSpaceMatrix(massMatrix, stiffnessMatrix, rayleightDampingMatrix);
+    std::cout << "Calculating natural frequency using sparse eigenvalue solver...\n";
+    const double receptanceFrequency = getSecondNaturalFrequency(sparseM, sparseK);
+    std::cout << "Calculated natural frequency: " << receptanceFrequency << " rad/s\n\n";
 
-    auto analysisResult{getAnalysisResult(stateSpaceMatrix)};
+    const double w = receptanceFrequency;
+    const double w2 = w * w;
 
-    const auto receptanceFrequency{std::real(analysisResult[2][1][1])};
-    
-    std::vector<std::vector<std::complex<double>>> receptanceMatrix = getReceptanceMatrix(receptanceFrequency, massMatrix, stiffnessMatrix, rayleightDampingMatrix);
+    // Build sparse complex dynamic stiffness matrix Z = K - w^2 * M + j * w * (alpha * M + beta * K)
+    std::complex<double> k_coeff(1.0, w * beta);
+    std::complex<double> m_coeff(-w2, w * alpha);
 
-    std::string receptanceLocation{std::string(MAIN_DIR) + "/receptance_matrix.txt"};
-    std::ofstream outFile(receptanceLocation);
-    if (!outFile) {
-        std::cerr << "[ERROR]: File cannot created!\n";
+    Eigen::SparseMatrix<std::complex<double>> Z(dim, dim);
+    std::vector<Eigen::Triplet<std::complex<double>>> zTriplets;
+    zTriplets.reserve(sparseK.nonZeros() + sparseM.nonZeros());
+
+    for (int k = 0; k < sparseK.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(sparseK, k); it; ++it) {
+            zTriplets.emplace_back(it.row(), it.col(), std::complex<double>(it.value(), 0.0) * k_coeff);
+        }
+    }
+    for (int k = 0; k < sparseM.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(sparseM, k); it; ++it) {
+            zTriplets.emplace_back(it.row(), it.col(), std::complex<double>(it.value(), 0.0) * m_coeff);
+        }
+    }
+    Z.setFromTriplets(zTriplets.begin(), zTriplets.end());
+
+    std::cout << "Factoring sparse impedance matrix Z (" << dim << "x" << dim << ")...\n";
+    Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double>>> lu;
+    lu.compute(Z);
+    if (lu.info() != Eigen::Success) {
+        std::cerr << "[ERROR]: SparseLU factorization failed!\n";
         return 1;
     }
 
-    std::vector<std::string> rowBuffer(dim);
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < dim; ++i) {
-        std::ostringstream ss;
-        for (std::size_t j = 0; j < dim; ++j) {
-            ss << receptanceMatrix[i][j] << '\t';
-        }
-        ss << '\n';
-        rowBuffer[i] = ss.str();
-    }
-
-    for (const auto& row : rowBuffer) {
-        outFile << row;
-    }
-
-    std::cout << "[SUCCESS]Receptance matrix writed in 'receptance_matrix.txt' file succesfully.\n";
-
-    std::vector<std::complex<double>> Q(dim, std::complex<double>(0.0, 0.0));
-    Q[0] = std::complex<double>(1000.0, 0.0);
-
-    std::vector<std::complex<double>> q(dim, 0.0);
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < dim; ++i) {
-        std::complex<double> sum{0.0, 0.0};
-        for (std::size_t j = 0; j < dim; ++j) {
-            sum += receptanceMatrix[i][j] * Q[j];
-        }
-        q[i] = sum;
-    }
+    // 1. Solve displacement vector q = Z^{-1} * Q
+    std::cout << "Solving displacement vector q...\n";
+    Eigen::VectorXcd Q_vec = Eigen::VectorXcd::Zero(dim);
+    Q_vec(0) = std::complex<double>(1000.0, 0.0);
+    Eigen::VectorXcd q_vec = lu.solve(Q_vec);
 
     std::string displacementLocation{std::string(MAIN_DIR) + "/displacement.txt"};
     std::ofstream dispFile(displacementLocation);
@@ -112,10 +109,40 @@ int main() {
     }
 
     for (std::size_t i = 0; i < dim; ++i) {
-        dispFile << "DOF " << i << ": " << q[i] << " (Magnitude: " << std::abs(q[i]) << ")\n";
+        dispFile << "DOF " << i << ": " << q_vec(i) << " (Magnitude: " << std::abs(q_vec(i)) << ")\n";
+    }
+    std::cout << "[SUCCESS] Displacement vector written to 'displacement.txt' successfully.\n";
+
+    // 2. Write receptance matrix to file in low-memory blocks
+    std::string receptanceLocation{std::string(MAIN_DIR) + "/receptance_matrix.txt"};
+    std::ofstream outFile(receptanceLocation);
+    if (!outFile) {
+        std::cerr << "[ERROR]: receptance_matrix.txt file cannot be created!\n";
+        return 1;
     }
 
-    std::cout << "[SUCCESS] Displacement vector written to 'displacement.txt' successfully.\n";
+    std::cout << "Writing receptance matrix to file in low-memory blocks...\n";
+    constexpr std::size_t blockSize = 256;
+    for (std::size_t colStart = 0; colStart < dim; colStart += blockSize) {
+        const std::size_t currentBlock = std::min(blockSize, dim - colStart);
+        Eigen::MatrixXcd I_block = Eigen::MatrixXcd::Zero(dim, currentBlock);
+        for (std::size_t k = 0; k < currentBlock; ++k) {
+            I_block(colStart + k, k) = 1.0;
+        }
+
+        Eigen::MatrixXcd R_block = lu.solve(I_block); // dim x currentBlock
+
+        for (std::size_t k = 0; k < currentBlock; ++k) {
+            std::ostringstream ss;
+            for (std::size_t j = 0; j < dim; ++j) {
+                ss << R_block(j, k) << '\t';
+            }
+            ss << '\n';
+            outFile << ss.str();
+        }
+    }
+
+    std::cout << "[SUCCESS] Receptance matrix written in 'receptance_matrix.txt' file successfully.\n";
 
     return 0;
 }

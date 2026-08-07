@@ -148,6 +148,13 @@ std::vector<std::vector<double>> getStriffnessMatrix(
     std::vector<std::vector<double>> stiffnessMatrix(dim, std::vector<double>(dim, 0.0));
     std::array<int, 3> elePos{0, 0, 0};
     std::array<int, 3> effPos{0, 0, 0};
+
+    const std::array<std::array<int, 3>, 6> offsetDirs = {{
+        {1, 0, 0}, {-1, 0, 0},
+        {0, 1, 0}, {0, -1, 0},
+        {0, 0, 1}, {0, 0, -1}
+    }};
+
     for (int eleID{1}; eleID <= totalMassNum; ++eleID){
         int idx = eleID - 1;
         int N2 = massNum * massNum;
@@ -155,17 +162,47 @@ std::vector<std::vector<double>> getStriffnessMatrix(
         elePos[1] = (idx % N2) / massNum;
         elePos[2] = idx / N2;
         fillDiag(elePos, eleID, stiffnessMatrix, stiffConst, radius, massNum);
-        for (int effID{1}; effID <= totalMassNum; ++effID){
-            int fidx = effID - 1;
-            int fN2 = massNum * massNum;
-            effPos[0] = fidx % massNum;
-            effPos[1] = (fidx % fN2) / massNum;
-            effPos[2] = fidx / fN2;
-            if(eleID != effID){
+
+        for (const auto& dir : offsetDirs) {
+            effPos[0] = elePos[0] + dir[0];
+            effPos[1] = elePos[1] + dir[1];
+            effPos[2] = elePos[2] + dir[2];
+
+            if (effPos[0] >= 0 && effPos[0] < massNum &&
+                effPos[1] >= 0 && effPos[1] < massNum &&
+                effPos[2] >= 0 && effPos[2] < massNum)
+            {
+                int fidx = effPos[0] + effPos[1] * massNum + effPos[2] * N2;
+                int effID = fidx + 1;
                 fillElement(elePos, eleID, effPos, effID, stiffnessMatrix, stiffConst, radius);
             }
         }
     }
 
     return stiffnessMatrix;
+}
+
+Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
+    std::size_t dim,
+    const double stiffConst,
+    const double radius,
+    const int massNum
+) {
+    const int totalMassNum{massNum * massNum * massNum};
+    std::vector<Eigen::Triplet<double>> triplets;
+    triplets.reserve(dim * 45);
+
+    std::vector<std::vector<double>> denseK = getStriffnessMatrix(dim, stiffConst, radius, massNum);
+
+    for (std::size_t i = 0; i < dim; ++i) {
+        for (std::size_t j = 0; j < dim; ++j) {
+            if (denseK[i][j] != 0.0) {
+                triplets.emplace_back(i, j, denseK[i][j]);
+            }
+        }
+    }
+
+    Eigen::SparseMatrix<double> K(dim, dim);
+    K.setFromTriplets(triplets.begin(), triplets.end());
+    return K;
 }
