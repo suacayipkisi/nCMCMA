@@ -82,7 +82,6 @@ cmake --build build
 
 ### 3. Output Files Generated
 
-* `receptance_matrix.txt`: Complete $N \times N$ complex receptance matrix output for the evaluated frequency.
 * `displacement.txt`: Dynamic displacement response per DOF showing real/imaginary parts and overall magnitude ($|q|$).
 
 ---
