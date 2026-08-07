@@ -38,7 +38,7 @@ int main() {
               << " | Using thread number: " << numThreads << "\n\n";
 
     // defining the cube size
-    constexpr std::size_t massNum{12};
+    constexpr std::size_t massNum{8};
     constexpr std::size_t dim{6 * massNum * massNum * massNum};
     
     std::string_view name{"Steel Spring A288"};
@@ -60,7 +60,7 @@ int main() {
 
     std::cout << "Calculating natural frequency using sparse eigenvalue solver...\n";
 
-    const double receptanceFrequency = getNaturalFrequency(sparseM, sparseK, 2);
+    const double receptanceFrequency = getNaturalFrequency(sparseM, sparseK, 7);
     std::cout << "Calculated natural frequency: " << receptanceFrequency << " rad/s\n\n";
 
     const double w = receptanceFrequency;
