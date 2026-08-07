@@ -38,7 +38,7 @@ int main() {
               << " | Using thread number: " << numThreads << "\n\n";
 
     // defining the cube size
-    constexpr std::size_t massNum{16};
+    constexpr std::size_t massNum{4};
     constexpr std::size_t dim{6 * massNum * massNum * massNum};
     
     std::string_view name{"Steel Spring A288"};

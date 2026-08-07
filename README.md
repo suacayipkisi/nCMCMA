@@ -26,7 +26,7 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 
 ---
 
-## Project Structure
+## Project Structur
 
 ```text
 nCMMA/
