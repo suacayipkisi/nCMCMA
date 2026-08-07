@@ -56,7 +56,9 @@ nCMMA/
   * **Eigen 3.3+** (Linear algebra library)
   * **OpenMP** (Multi-threading support)
 
-### Installing Dependencies (Ubuntu / Debian)
+### Installing Dependencies (probably not necessary)
+
+#### Ubuntu/Debian
 
 ```bash
 sudo apt update
