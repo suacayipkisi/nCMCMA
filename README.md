@@ -92,7 +92,7 @@ cmake --build build
 1. **Governing Equation:**
    $$\mathbf{M} \ddot{\mathbf{x}}(t) + \mathbf{C} \dot{\mathbf{x}}(t) + \mathbf{K} \mathbf{x}(t) = \mathbf{Q}(t)$$
 
-2. **Receptance Matrix ($\boldsymbol{\alpha}(\omega)$):**
+2. **Receptance Matrix ( $\boldsymbol{\alpha}(\omega)$ ):**
    $$\boldsymbol{\alpha}(\omega) = \left( \mathbf{K} - \omega^2 \mathbf{M} + i \omega \mathbf{C} \right)^{-1}$$
 
 3. **Dynamic Response Calculation ($q$):**
