@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.22)
+project(ncmcma VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(OpenMP REQUIRED)
+
+set(SOURCES
+	main.cpp
+)
+
+set(HEADERS
+	src/modalAnalysis/massMatrix.h
+	src/modalAnalysis/stiffMatrix.h
+	src/modalAnalysis/receptanceMatrix.h
+	src/modalAnalysis/applyStateSpace.h
+	src/matrixOperations/stdEigenValueSolver.h
+	src/matrixOperations/stdMatrixOperations.h
+)
+
+add_executable(ncmcma ${SOURCES})
+target_link_libraries(ncmcma PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)
