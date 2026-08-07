@@ -11,7 +11,6 @@ find_package(OpenMP REQUIRED)
 
 set(SOURCES
 	main.cpp
-	src/matrixOperations/stdMatrixOperations.cpp
 	src/matrixOperations/stdEigenValueSolver.cpp
 	src/modalAnalysis/massMatrix.cpp
 	src/modalAnalysis/stiffMatrix.cpp
@@ -21,7 +20,6 @@ set(HEADERS
 	src/modalAnalysis/massMatrix.h
 	src/modalAnalysis/stiffMatrix.h
 	src/matrixOperations/stdEigenValueSolver.h
-	src/matrixOperations/stdMatrixOperations.h
 )
 
 add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

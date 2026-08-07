@@ -35,19 +35,13 @@ nCMMA/
 ├── 2_2_2_cubeSample.png        # Sample lattice model diagram
 └── src/
     ├── matrixOperations/
-    │   ├── stdMatrixOperations.h   # Parallel matrix addition & multiplication operations
-    │   ├── stdMatrixOperations.cpp
     │   ├── stdEigenValueSolver.h   # Eigen-based eigenvalue solver & frequency extractor
     │   └── stdEigenValueSolver.cpp
     └── modalAnalysis/
         ├── massMatrix.h           # Mass matrix generation (6 DOF / node)
         ├── massMatrix.cpp
         ├── stiffMatrix.h          # Stiffness matrix assembly
-        ├── stiffMatrix.cpp
-        ├── applyStateSpace.h      # State-space matrix formulation
-        ├── applyStateSpace.cpp
-        ├── receptanceMatrix.h     # Receptance matrix computation & inversion
-        └── receptanceMatrix.cpp
+        └── stiffMatrix.cpp
 ```
 
 ---
