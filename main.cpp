@@ -21,9 +21,7 @@
 
 #include "src/modalAnalysis/stiffMatrix.h"
 #include "src/modalAnalysis/massMatrix.h"
-#include "src/modalAnalysis/applyStateSpace.h"
 #include "src/matrixOperations/stdEigenValueSolver.h"
-#include "src/modalAnalysis/receptanceMatrix.h"
 
 #ifndef MAIN_DIR
 #define MAIN_DIR "main"
@@ -61,7 +59,7 @@ int main() {
     Eigen::SparseMatrix<double> sparseK = getSparseStiffnessMatrix(dim, stiffnessConst, radius, static_cast<int>(massNum));
 
     std::cout << "Calculating natural frequency using sparse eigenvalue solver...\n";
-    // modeIndex = 1 corresponds to analysisResult[2][1][1] (2nd mode / 1st flexible mode)
+
     const double receptanceFrequency = getNaturalFrequency(sparseM, sparseK, 2);
     std::cout << "Calculated natural frequency: " << receptanceFrequency << " rad/s\n\n";
 
