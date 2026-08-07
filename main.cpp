@@ -38,7 +38,7 @@ int main() {
               << " | Using thread number: " << numThreads << "\n\n";
 
     // defining the cube size
-    constexpr std::size_t massNum{4};
+    constexpr std::size_t massNum{12};
     constexpr std::size_t dim{6 * massNum * massNum * massNum};
     
     std::string_view name{"Steel Spring A288"};
@@ -70,22 +70,10 @@ int main() {
     std::complex<double> k_coeff(1.0, w * beta);
     std::complex<double> m_coeff(-w2, w * alpha);
 
-    Eigen::SparseMatrix<std::complex<double>> Z(dim, dim);
-    std::vector<Eigen::Triplet<std::complex<double>>> zTriplets;
-    zTriplets.reserve(sparseK.nonZeros() + sparseM.nonZeros());
-
-    for (int k = 0; k < sparseK.outerSize(); ++k) {
-        for (Eigen::SparseMatrix<double>::InnerIterator it(sparseK, k); it; ++it) {
-            zTriplets.emplace_back(it.row(), it.col(), std::complex<double>(it.value(), 0.0) * k_coeff);
-        }
-    }
-    for (int k = 0; k < sparseM.outerSize(); ++k) {
-        for (Eigen::SparseMatrix<double>::InnerIterator it(sparseM, k); it; ++it) {
-            zTriplets.emplace_back(it.row(), it.col(), std::complex<double>(it.value(), 0.0) * m_coeff);
-        }
-    }
-    Z.setFromTriplets(zTriplets.begin(), zTriplets.end());
-
+    Eigen::SparseMatrix<std::complex<double>> Z = 
+        sparseK.cast<std::complex<double>>() * k_coeff + 
+        sparseM.cast<std::complex<double>>() * m_coeff;
+    
     std::cout << "Factoring sparse impedance matrix Z (" << dim << "x" << dim << ")...\n";
     Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double>>> lu;
     lu.compute(Z);

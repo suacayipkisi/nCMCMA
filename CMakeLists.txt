@@ -24,8 +24,8 @@ set(HEADERS
 
 add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_compile_options(-mcmodel=medium)
-add_link_options(-mcmodel=medium)
+add_compile_options(-O3 -march=native)
+add_link_options(-O3)
 
 add_executable(ncmcma ${SOURCES})
 target_link_libraries(ncmcma PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)

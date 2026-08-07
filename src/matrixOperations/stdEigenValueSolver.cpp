@@ -67,7 +67,9 @@ double getNaturalFrequency(
     Eigen::HouseholderQR<Eigen::MatrixXd> qr(Q);
     Q = qr.householderQ() * Eigen::MatrixXd::Identity(dim, numVecs);
 
-    for (int iter = 0; iter < 25; ++iter) {
+    Eigen::VectorXd prevEvals = Eigen::VectorXd::Zero(numVecs);
+    
+    for (int iter = 0; iter < 200; ++iter) { 
         Eigen::MatrixXd V(dim, numVecs);
         #pragma omp parallel for schedule(static)
         for (int col = 0; col < numVecs; ++col) {
@@ -75,6 +77,14 @@ double getNaturalFrequency(
         }
         Eigen::HouseholderQR<Eigen::MatrixXd> qrIter(V);
         Q = qrIter.householderQ() * Eigen::MatrixXd::Identity(dim, numVecs);
+        
+        Eigen::MatrixXd SQ_iter = S * Q;
+        Eigen::VectorXd currentEvals = (Q.transpose() * SQ_iter).diagonal();
+        
+        if (iter > 0 && (currentEvals - prevEvals).norm() < 1e-6) {
+            break; 
+        }
+        prevEvals = currentEvals;
     }
 
     Eigen::MatrixXd SQ(dim, numVecs);
@@ -87,7 +97,7 @@ double getNaturalFrequency(
     Eigen::VectorXd evals = es.eigenvalues();
 
     std::size_t idx = std::min(modeIndex, static_cast<std::size_t>(evals.size() - 1));
-    double lambda = evals(static_cast<Eigen::Index>(idx));
+    double lambda = evals(static_cast<Eigen::Index>(idx)) - shift;
 
     return std::sqrt(std::max(0.0, lambda));
 }
