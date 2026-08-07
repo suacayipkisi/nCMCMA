@@ -102,7 +102,7 @@ cmake --build build
 
 $$\begin{matrix} K, M \xrightarrow{\text{Diagonal Transformation}} S = M^{-1/2} K M^{-1/2} \end{matrix}$$  
 
-$$\begin{matrix} A = S + I \xrightarrow{\text{LDLT Ayrışımı}} A = L D L^T \end{matrix}$$  
+$$\begin{matrix} A = S + I \xrightarrow{\text{LDLT Decomposition}} A = L D L^T \end{matrix}$$  
 
 $$\begin{matrix} \text{25 x Iter: } V_k = A^{-1} Q_k \xrightarrow{\text{QR}} Q_{k+1} \end{matrix}$$  
 
