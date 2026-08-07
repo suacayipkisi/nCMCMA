@@ -1,4 +1,4 @@
-# nCMMA (non-Continuous Material Cube Modal Analysis)
+# nCMMA (non-Continuous-Material Cube Modal Analysis)
 
 nCMMA is designed for the structural modal analysis and dynamic response simulation of 3D non-continuous material cube structures (mass-spring lattice models).
 
