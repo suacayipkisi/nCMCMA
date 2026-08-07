@@ -1,5 +1,4 @@
 #include "applyStateSpace.h"
-#include "../matrixOperations/stdMatrixOperations.h"
 #include <omp.h>
 
 std::vector<std::vector<double>> getIdentityMatrix(std::size_t size){

@@ -7,7 +7,6 @@
 #endif
 
 #include "receptanceMatrix.h"
-#include "../matrixOperations/stdMatrixOperations.h"
 #include <omp.h>
 #include <stdexcept>
 
