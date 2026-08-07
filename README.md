@@ -98,5 +98,6 @@ cmake --build build
 3. **Dynamic Response Calculation ($q$):**
    $$\mathbf{q}(\omega) = \boldsymbol{\alpha}(\omega) \cdot \mathbf{Q}(\omega)$$
 
-4. **Process Flow:**
-   $$\begin{matrix} K, M \xrightarrow{\text{Diagonal Transition}} S = M^{-1/2} K M^{-1/2} \\ \downarrow \\ A = S + I \xrightarrow{\text{LDLT Decomposition}} A = L D L^T \\ \downarrow \\ \text{25 x Iter: } V_k = A^{-1} Q_k \xrightarrow{\text{QR}} Q_{k+1} \\ \downarrow \\ T = Q^T S Q \xrightarrow{\text{Rayleigh-Ritz}} \text{eig}(T) \rightarrow \lambda \\ \downarrow \\ \omega = \sqrt{\lambda} \end{matrix}$$
+## Process Flow
+
+$$\begin{matrix} K, M \xrightarrow{\text{Diagonal Transition}} S = M^{-1/2} K M^{-1/2} \\ \downarrow \\ A = S + I \xrightarrow{\text{LDLT Decomposition}} A = L D L^T \\ \downarrow \\ \text{25 x Iter: } V_k = A^{-1} Q_k \xrightarrow{\text{QR}} Q_{k+1} \\ \downarrow \\ T = Q^T S Q \xrightarrow{\text{Rayleigh-Ritz}} \text{eig}(T) \rightarrow \lambda \\ \downarrow \\ \omega = \sqrt{\lambda} \end{matrix}$$
