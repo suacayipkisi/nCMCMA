@@ -22,5 +22,7 @@ set(HEADERS
 	src/matrixOperations/stdMatrixOperations.h
 )
 
+add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+
 add_executable(ncmcma ${SOURCES})
 target_link_libraries(ncmcma PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)

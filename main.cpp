@@ -9,12 +9,17 @@
 #include <thread>
 #include <algorithm>
 #include <omp.h>
+#include <numbers>
 
 #include "src/modalAnalysis/stiffMatrix.h"
 #include "src/modalAnalysis/massMatrix.h"
 #include "src/modalAnalysis/applyStateSpace.h"
 #include "src/matrixOperations/stdEigenValueSolver.h"
 #include "src/modalAnalysis/receptanceMatrix.h"
+
+#ifndef MAIN_DIR
+#define MAIN_DIR "main"
+#endif
 
 int main() {
 
@@ -54,7 +59,8 @@ int main() {
         *new std::array<std::array<std::complex<double>, dim>, dim>{getReceptanceMatrix(receptanceFrequency, massMatrix, stiffnessMatrix, rayleightDampingMatrix)}
     };
 
-    std::ofstream outFile("receptance_matrix.txt");
+    std::string receptanceLocation{std::string(MAIN_DIR) + "/receptance_matrix.txt"};
+    std::ofstream outFile(receptanceLocation);
     if (!outFile) {
         std::cerr << "[ERROR]: File cannot created!\n";
         delete &stateSpaceMatrix;
@@ -92,7 +98,8 @@ int main() {
         q[i] = sum;
     }
 
-    std::ofstream dispFile("displacement.txt");
+    std::string displacementLocation{std::string(MAIN_DIR) + "/displacement.txt"};
+    std::ofstream dispFile(displacementLocation);
     if (!dispFile) {
         std::cerr << "[ERROR]: displacement.txt file cannot be created!\n";
         delete &stateSpaceMatrix;
