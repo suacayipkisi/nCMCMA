@@ -11,6 +11,12 @@ find_package(OpenMP REQUIRED)
 
 set(SOURCES
 	main.cpp
+	src/matrixOperations/stdMatrixOperations.cpp
+	src/matrixOperations/stdEigenValueSolver.cpp
+	src/modalAnalysis/massMatrix.cpp
+	src/modalAnalysis/stiffMatrix.cpp
+	src/modalAnalysis/applyStateSpace.cpp
+	src/modalAnalysis/receptanceMatrix.cpp
 )
 
 set(HEADERS
@@ -24,5 +30,9 @@ set(HEADERS
 
 add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_executable(ncmcma ${SOURCES})
+add_compile_options(-mcmodel=medium)
+add_link_options(-mcmodel=medium)
+
+add_executable(ncmcma ${SOURCES}
+	src/modalAnalysis/receptanceMatrix.cpp)
 target_link_libraries(ncmcma PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)

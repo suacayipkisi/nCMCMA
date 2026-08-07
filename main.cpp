@@ -11,6 +11,14 @@
 #include <omp.h>
 #include <numbers>
 
+#if __has_include(<Eigen/Dense>)
+#include <Eigen/Dense>
+#elif __has_include(<eigen3/Eigen/Dense>)
+#include <eigen3/Eigen/Dense>
+#else
+#error "Eigen headers not found. Add Eigen include path (e.g., /usr/include/eigen3)."
+#endif
+
 #include "src/modalAnalysis/stiffMatrix.h"
 #include "src/modalAnalysis/massMatrix.h"
 #include "src/modalAnalysis/applyStateSpace.h"
@@ -31,11 +39,15 @@ int main() {
     std::cout << "Thread number in system: " << (hardwareThreads > 0 ? hardwareThreads : 1)
               << " | Using thread number: " << numThreads << "\n\n";
 
-    constexpr std::size_t massNum{3};
+    // defining the cube size
+    constexpr std::size_t massNum{2};
     constexpr std::size_t dim{6 * massNum * massNum * massNum};
     
     std::string_view name{"Steel Spring A288"};
 
+    // defining material properties
+    //normally we will pull these constants from file
+    //Steel_Spring_A228
     const double alpha{.02287};
     const double beta{0.00000578};
     const double radius{0.01};
@@ -43,28 +55,22 @@ int main() {
     const double mass{4.0 / 3.0 * std::numbers::pi * radius * radius * radius};
     const double stiffnessConst{1000};
 
-    static std::array<std::array<double, dim>, dim> massMatrix{getMassMatrix<dim>(mass, radius, static_cast<int>(massNum))};
-    static std::array<std::array<double, dim>, dim> stiffnessMatrix{getStriffnessMatrix<dim>(stiffnessConst, radius, static_cast<int>(massNum))};
-    static std::array<std::array<double, dim>, dim> rayleightDampingMatrix{getRayleightDampingMatrix<dim>(name, massMatrix, stiffnessMatrix)};
+    std::vector<std::vector<double>> massMatrix = getMassMatrix(dim, mass, radius, static_cast<int>(massNum));
+    std::vector<std::vector<double>> stiffnessMatrix = getStriffnessMatrix(dim, stiffnessConst, radius, static_cast<int>(massNum));
+    std::vector<std::vector<double>> rayleightDampingMatrix = getRayleightDampingMatrix(name, massMatrix, stiffnessMatrix, alpha, beta);
 
-    std::array<std::array<double, 2 * dim>, 2 * dim>& stateSpaceMatrix{
-        *new std::array<std::array<double, 2 * dim>, 2 * dim>{getStateSpaceMatrix<dim>(massMatrix, stiffnessMatrix, rayleightDampingMatrix)}
-    };
+    std::vector<std::vector<double>> stateSpaceMatrix = getStateSpaceMatrix(massMatrix, stiffnessMatrix, rayleightDampingMatrix);
 
     auto analysisResult{getAnalysisResult(stateSpaceMatrix)};
 
     const auto receptanceFrequency{std::real(analysisResult[2][1][1])};
     
-    std::array<std::array<std::complex<double>, dim>, dim>& receptanceMatrix{
-        *new std::array<std::array<std::complex<double>, dim>, dim>{getReceptanceMatrix(receptanceFrequency, massMatrix, stiffnessMatrix, rayleightDampingMatrix)}
-    };
+    std::vector<std::vector<std::complex<double>>> receptanceMatrix = getReceptanceMatrix(receptanceFrequency, massMatrix, stiffnessMatrix, rayleightDampingMatrix);
 
     std::string receptanceLocation{std::string(MAIN_DIR) + "/receptance_matrix.txt"};
     std::ofstream outFile(receptanceLocation);
     if (!outFile) {
         std::cerr << "[ERROR]: File cannot created!\n";
-        delete &stateSpaceMatrix;
-        delete &receptanceMatrix;
         return 1;
     }
 
@@ -85,10 +91,10 @@ int main() {
 
     std::cout << "[SUCCESS]Receptance matrix writed in 'receptance_matrix.txt' file succesfully.\n";
 
-    std::array<std::complex<double>, dim> Q{};
+    std::vector<std::complex<double>> Q(dim, std::complex<double>(0.0, 0.0));
     Q[0] = std::complex<double>(1000.0, 0.0);
 
-    std::array<std::complex<double>, dim> q{};
+    std::vector<std::complex<double>> q(dim, 0.0);
     #pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i < dim; ++i) {
         std::complex<double> sum{0.0, 0.0};
@@ -102,8 +108,6 @@ int main() {
     std::ofstream dispFile(displacementLocation);
     if (!dispFile) {
         std::cerr << "[ERROR]: displacement.txt file cannot be created!\n";
-        delete &stateSpaceMatrix;
-        delete &receptanceMatrix;
         return 1;
     }
 
@@ -112,9 +116,6 @@ int main() {
     }
 
     std::cout << "[SUCCESS] Displacement vector written to 'displacement.txt' successfully.\n";
-
-    delete &stateSpaceMatrix;
-    delete &receptanceMatrix;
 
     return 0;
 }

@@ -1,255 +1,96 @@
 #pragma once
 
 #include <cstddef>
-#include <array>
+#include <vector>
 #include <complex>
-#include <omp.h>
 
-//==========MULTİPLİCATİON================
+//==========MULTIPLICATION================
 
 //value * vector or vector * value
-template <std::size_t T>
-std::array<double, T> multbyValue_Vxval(const std::array<double, T>& vector, const double value){
-    std::array<double, T> resultVector{vector};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        resultVector[i] *= value;
-    }
-    return resultVector;
-}
+std::vector<double> multbyValue_Vxval(const std::vector<double>& vec, const double value);
 
 //matrix * value or value * matrix
-template <std::size_t T>
-std::array<std::array<double, T>, T> multbyValue_Mxval(const std::array<std::array<double, T>, T>& matrix, const double value){
-    std::array<std::array<double, T>, T> resultMatrix{matrix};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < T; ++j){
-            resultMatrix[i][j] *= value;
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<double>> multbyValue_Mxval(const std::vector<std::vector<double>>& matrix, const double value);
 
 //matrix * matrix
-template<std::size_t T, std::size_t U, std::size_t V>
-std::array<std::array<double, T>, V> mult_MxM(const std::array<std::array<double, T>, U>& matrix1, const std::array<std::array<double, U>, V>& matrix2){
-    std::array<std::array<double, T>, V> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < V; ++j){
-            for (std::size_t k = 0; k < U; ++k){
-                resultMatrix[i][j] += matrix1[i][k] * matrix2[k][j];
-            }
-        }
-    }
-    return resultMatrix;
-}
-
+std::vector<std::vector<double>> mult_MxM(
+    const std::vector<std::vector<double>>& matrix1,
+    const std::vector<std::vector<double>>& matrix2
+);
 
 //vector * vector_transpose
-template<std::size_t T, std::size_t U>
-std::array<std::array<double, T>, U> mult_VxVt(const std::array<double, T>& vector1, const std::array<double, U>& matrix2){
-    std::array<std::array<double, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = vector1[i] * matrix2[j];
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<double>> mult_VxVt(
+    const std::vector<double>& vector1,
+    const std::vector<double>& vector2
+);
 
 //matrix * vector
-template<std::size_t T, std::size_t U>
-std::array<double, T> mult_MxV(const std::array<std::array<double, T>, U>& matrix1, const std::array<double, U>& vector2){
-    std::array<double, T> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for(std::size_t j = 0; j < U; ++j){
-            resultMatrix[i] += matrix1[i][j] * vector2[j];
-        }
-    }
-    return resultMatrix;
-}
+std::vector<double> mult_MxV(
+    const std::vector<std::vector<double>>& matrix1,
+    const std::vector<double>& vector2
+);
 
 // complexMatrix * complexMatrix
-template<std::size_t T, std::size_t U, std::size_t V>
-std::array<std::array<std::complex<double>, T>, V> multCompl_cMxcM(
-    const std::array<std::array<std::complex<double>, T>, U>& complexMatrix1,
-    const std::array<std::array<std::complex<double>, U>, V>& complexMatrix2
-){
-    std::array<std::array<std::complex<double>, T>, V> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < V; ++j){
-            for (std::size_t k = 0; k < U; ++k){
-                resultMatrix[i][j] += complexMatrix1[i][k] * complexMatrix2[k][j];
-            }
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<std::complex<double>>> multCompl_cMxcM(
+    const std::vector<std::vector<std::complex<double>>>& complexMatrix1,
+    const std::vector<std::vector<std::complex<double>>>& complexMatrix2
+);
 
 // complexMatrix * Matrix
-template<std::size_t T, std::size_t U, std::size_t V>
-std::array<std::array<std::complex<double>, T>, V> multCompl_cMxM(
-    const std::array<std::array<std::complex<double>, T>, U>& complexMatrix1,
-    const std::array<std::array<double, U>, V>& matrix2
-){
-    std::array<std::array<std::complex<double>, T>, V> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < V; ++j){
-            for (std::size_t k = 0; k < U; ++k){
-                resultMatrix[i][j] += complexMatrix1[i][k] * matrix2[k][j];
-            }
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<std::complex<double>>> multCompl_cMxM(
+    const std::vector<std::vector<std::complex<double>>>& complexMatrix1,
+    const std::vector<std::vector<double>>& matrix2
+);
 
 // Matrix * complexMatrix
-template<std::size_t T, std::size_t U, std::size_t V>
-std::array<std::array<std::complex<double>, T>, V> multCompl_MxcM(
-    const std::array<std::array<double, T>, U>& matrix1,
-    const std::array<std::array<std::complex<double>, U>, V>& complexMatrix2
-){
-    std::array<std::array<std::complex<double>, T>, V> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < V; ++j){
-            for (std::size_t k = 0; k < U; ++k){
-                resultMatrix[i][j] += matrix1[i][k] * complexMatrix2[k][j];
-            }
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<std::complex<double>>> multCompl_MxcM(
+    const std::vector<std::vector<double>>& matrix1,
+    const std::vector<std::vector<std::complex<double>>>& complexMatrix2
+);
 
 // matrix * complexVal
-template<std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> multCompl_MxcVal(
-    const std::array<std::array<double, T>, U>& matrix1,
+std::vector<std::vector<std::complex<double>>> multCompl_MxcVal(
+    const std::vector<std::vector<double>>& matrix1,
     const std::complex<double> value
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] * value;
-        }
-    }
-    return resultMatrix;
-}
+);
 
 // complexMatrix * Val
-template<std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> multCompl_cMxVal(
-    const std::array<std::array<std::complex<double>, T>, U>& matrix1,
+std::vector<std::vector<std::complex<double>>> multCompl_cMxVal(
+    const std::vector<std::vector<std::complex<double>>>& matrix1,
     const double value
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] * value;
-        }
-    }
-    return resultMatrix;
-}
+);
 
 // complexMatrix * complexValue
-template<std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> multCompl_cMxcVal(
-    const std::array<std::array<std::complex<double>, T>, U>& matrix1,
+std::vector<std::vector<std::complex<double>>> multCompl_cMxcVal(
+    const std::vector<std::vector<std::complex<double>>>& matrix1,
     const std::complex<double> value
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] * value;
-        }
-    }
-    return resultMatrix;
-}
-
+);
 
 //=============SUM===============
 
 // vec + vec
-template <std::size_t T>
-std::array<double, T> sum_VxV(const std::array<double, T>& vector1, const std::array<double, T>& vector2){
-    std::array<double, T> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        resultMatrix[i] = vector1[i] + vector2[i];
-    }
-    return resultMatrix;
-}
+std::vector<double> sum_VxV(const std::vector<double>& vector1, const std::vector<double>& vector2);
 
 // matrix + matrix
-template <std::size_t T, std::size_t U>
-std::array<std::array<double, T>, U> sum_MxM(
-    const std::array<std::array<double, T>, U>& matrix1,
-    const std::array<std::array<double, T>, U>& matrix2
-){
-    std::array<std::array<double, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] + matrix2[i][j];
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<double>> sum_MxM(
+    const std::vector<std::vector<double>>& matrix1,
+    const std::vector<std::vector<double>>& matrix2
+);
 
 // complexMatrix + complexMatrix
+std::vector<std::vector<std::complex<double>>> sumComplex_MxM(
+    const std::vector<std::vector<std::complex<double>>>& matrix1,
+    const std::vector<std::vector<std::complex<double>>>& matrix2
+);
 
-template <std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> sumComplex_MxM(
-    const std::array<std::array<std::complex<double>, T>, U>& matrix1,
-    const std::array<std::array<std::complex<double>, T>, U>& matrix2
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] + matrix2[i][j];
-        }
-    }
-    return resultMatrix;
-}
 // matrix + complexMatrix
+std::vector<std::vector<std::complex<double>>> sumComplex_MxM(
+    const std::vector<std::vector<double>>& matrix1,
+    const std::vector<std::vector<std::complex<double>>>& matrix2
+);
 
-template <std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> sumComplex_MxM(
-    const std::array<std::array<double, T>, U>& matrix1,
-    const std::array<std::array<std::complex<double>, T>, U>& matrix2
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] + matrix2[i][j];
-        }
-    }
-    return resultMatrix;
-}
 //complexMatrix + matrix
-
-template <std::size_t T, std::size_t U>
-std::array<std::array<std::complex<double>, T>, U> sumComplex_MxM(
-    const std::array<std::array<std::complex<double>, T>, U>& matrix1,
-    const std::array<std::array<double, T>, U>& matrix2
-){
-    std::array<std::array<std::complex<double>, T>, U> resultMatrix{};
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < U; ++j){
-            resultMatrix[i][j] = matrix1[i][j] + matrix2[i][j];
-        }
-    }
-    return resultMatrix;
-}
+std::vector<std::vector<std::complex<double>>> sumComplex_MxM(
+    const std::vector<std::vector<std::complex<double>>>& matrix1,
+    const std::vector<std::vector<double>>& matrix2
+);
