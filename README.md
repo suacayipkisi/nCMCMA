@@ -33,17 +33,21 @@ nCMMA/
 ├── CMakeLists.txt              # Build configuration with C++23, Eigen3 & OpenMP
 ├── main.cpp                    # Application entry point & parallel analysis runner
 ├── 2_2_2_cubeSample.png        # Sample lattice model diagram
-├── data/
-│   └── rayleightConstants.csv  # Material damping parameters data
 └── src/
     ├── matrixOperations/
     │   ├── stdMatrixOperations.h   # Parallel matrix addition & multiplication operations
-    │   └── stdEigenValueSolver.h   # Eigen-based eigenvalue solver & frequency extractor
+    │   ├── stdMatrixOperations.cpp
+    │   ├── stdEigenValueSolver.h   # Eigen-based eigenvalue solver & frequency extractor
+    │   └── stdEigenValueSolver.cpp
     └── modalAnalysis/
         ├── massMatrix.h           # Mass matrix generation (6 DOF / node)
+        ├── massMatrix.cpp
         ├── stiffMatrix.h          # Stiffness matrix assembly
+        ├── stiffMatrix.cpp
         ├── applyStateSpace.h      # State-space matrix formulation
-        └── receptanceMatrix.h     # Receptance matrix computation & inversion
+        ├── applyStateSpace.cpp
+        ├── receptanceMatrix.h     # Receptance matrix computation & inversion
+        └── receptanceMatrix.cpp
 ```
 
 ---
