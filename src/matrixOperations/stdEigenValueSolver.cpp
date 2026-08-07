@@ -69,6 +69,7 @@ double getNaturalFrequency(
 
     for (int iter = 0; iter < 25; ++iter) {
         Eigen::MatrixXd V(dim, numVecs);
+        #pragma omp parallel for schedule(static)
         for (int col = 0; col < numVecs; ++col) {
             V.col(col) = solver.solve(Q.col(col));
         }
@@ -89,93 +90,4 @@ double getNaturalFrequency(
     double lambda = evals(static_cast<Eigen::Index>(idx));
 
     return std::sqrt(std::max(0.0, lambda));
-}
-
-std::vector<std::vector<std::complex<double>>> solveEigenValueProblem(const std::vector<std::vector<double>>& probM){
-    const std::size_t T = probM.size();
-    if (T == 0) return {};
-
-    if (T >= 1000 && T % 2 == 0 && probM[0].size() == T) {
-        const std::size_t N = T / 2;
-        if (probM[0][N] == 1.0) {
-            Eigen::MatrixXd S(N, N);
-            #pragma omp parallel for schedule(static)
-            for (std::size_t i = 0; i < N; ++i) {
-                for (std::size_t j = 0; j < N; ++j) {
-                    double bij = probM[N + i][j];
-                    double bji = probM[N + j][i];
-                    double val = std::sqrt(std::abs(bij * bji));
-                    S(i, j) = (bij < 0.0) ? val : -val;
-                }
-            }
-
-            Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(S, Eigen::EigenvaluesOnly);
-            if (es.info() == Eigen::Success) {
-                Eigen::VectorXd eigVals = es.eigenvalues();
-                std::vector<std::vector<std::complex<double>>> result(2, std::vector<std::complex<double>>(T, 0.0));
-                for (std::size_t i = 0; i < N && i < T; ++i) {
-                    double omega2 = std::max(0.0, eigVals(i));
-                    double omega = std::sqrt(omega2);
-                    result[0][i] = std::complex<double>(omega, 0.0);
-                    result[1][i] = std::complex<double>(1.0, 0.0);
-                }
-                return result;
-            }
-        }
-    }
-
-    Eigen::MatrixXd A(T, T);
-    #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < T; ++i){
-        for (std::size_t j = 0; j < T; ++j){
-            A(i, j) = probM[i][j];
-        }
-    }
-
-    Eigen::EigenSolver<Eigen::MatrixXd> solver(A);
-
-    if (solver.info() != Eigen::Success) {
-        std::cerr << "Eigenvalue calculation couldn't iterated!" << std::endl;
-        return {};
-    }
-
-    Eigen::VectorXcd eigenvalues = solver.eigenvalues();
-    Eigen::MatrixXcd eigenvectors = solver.eigenvectors();
-
-    std::vector<std::vector<std::complex<double>>> result(2, std::vector<std::complex<double>>(T, 0.0));
-    for (Eigen::Index i = 0; i < eigenvalues.size(); ++i) {
-        result[0][i] = eigenvalues(i);
-        result[1][i] = eigenvectors(0, i);
-    }
-
-    return result;
-}
-
-std::vector<std::vector<std::vector<std::complex<double>>>> getAnalysisResult(const std::vector<std::vector<double>>& matrixE){
-    const std::size_t T = matrixE.size();
-    if (T == 0) return {};
-    const auto eigResults{solveEigenValueProblem(matrixE)};
-    if (eigResults.empty() || eigResults[0].empty()) return {};
-
-    const std::size_t maxRows = std::min(T, std::size_t(256));
-
-    std::vector<std::vector<std::complex<double>>> lambdaValues(maxRows);
-    std::vector<std::vector<std::complex<double>>> modalValues(maxRows);
-    std::vector<std::vector<std::complex<double>>> naturalFrequencies(maxRows);
-
-    for (std::size_t i{0}; i < maxRows; ++i) {
-        lambdaValues[i].resize(i + 1, 0.0);
-        modalValues[i].resize(i + 1, 0.0);
-        naturalFrequencies[i].resize(i + 1, 0.0);
-
-        lambdaValues[i][i] = eigResults[0][i];
-        naturalFrequencies[i][i] = std::abs(eigResults[0][i]);
-        modalValues[i][i] = eigResults[1][i];
-    }
-
-    return std::vector {
-        lambdaValues,
-        modalValues,
-        naturalFrequencies
-    };
 }

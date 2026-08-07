@@ -32,7 +32,7 @@ int main() {
     const unsigned int hardwareThreads{std::thread::hardware_concurrency()};
     const int numThreads{static_cast<int>(hardwareThreads > 0 ? hardwareThreads : 4)};
     omp_set_num_threads(numThreads);
-    Eigen::setNbThreads(numThreads);
+    Eigen::setNbThreads(1); // Eigen inner parallelism off to avoid OpenMP thread collision
 
     std::cout << "Thread number in system: " << (hardwareThreads > 0 ? hardwareThreads : 1)
               << " | Using thread number: " << numThreads << "\n\n";
