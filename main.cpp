@@ -32,7 +32,7 @@
 int main() {
 
     const unsigned int hardwareThreads{std::thread::hardware_concurrency()};
-    const int numThreads{std::max(1, static_cast<int>((hardwareThreads > 0 ? hardwareThreads : 2) / 2))};
+    const int numThreads{static_cast<int>(hardwareThreads > 0 ? hardwareThreads : 4)};
     omp_set_num_threads(numThreads);
     Eigen::setNbThreads(numThreads);
 
@@ -113,37 +113,6 @@ int main() {
         dispFile << "DOF " << i << ": " << q_vec(i) << " (Magnitude: " << std::abs(q_vec(i)) << ")\n";
     }
     std::cout << "[SUCCESS] Displacement vector written to 'displacement.txt' successfully.\n";
-
-    // 2. Write receptance matrix to file in low-memory blocks
-    std::string receptanceLocation{std::string(MAIN_DIR) + "/receptance_matrix.txt"};
-    std::ofstream outFile(receptanceLocation);
-    if (!outFile) {
-        std::cerr << "[ERROR]: receptance_matrix.txt file cannot be created!\n";
-        return 1;
-    }
-
-    std::cout << "Writing receptance matrix to file in low-memory blocks...\n";
-    constexpr std::size_t blockSize = 256;
-    for (std::size_t colStart = 0; colStart < dim; colStart += blockSize) {
-        const std::size_t currentBlock = std::min(blockSize, dim - colStart);
-        Eigen::MatrixXcd I_block = Eigen::MatrixXcd::Zero(dim, currentBlock);
-        for (std::size_t k = 0; k < currentBlock; ++k) {
-            I_block(colStart + k, k) = 1.0;
-        }
-
-        Eigen::MatrixXcd R_block = lu.solve(I_block); // dim x currentBlock
-
-        for (std::size_t k = 0; k < currentBlock; ++k) {
-            std::ostringstream ss;
-            for (std::size_t j = 0; j < dim; ++j) {
-                ss << R_block(j, k) << '\t';
-            }
-            ss << '\n';
-            outFile << ss.str();
-        }
-    }
-
-    std::cout << "[SUCCESS] Receptance matrix written in 'receptance_matrix.txt' file successfully.\n";
 
     return 0;
 }
