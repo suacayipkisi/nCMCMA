@@ -1,4 +1,7 @@
-#define GL_GLEXT_PROTOTYPES
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "gui.h"
@@ -7,7 +10,6 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <cmath>
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -92,6 +94,11 @@ void initAndRunGui() {
     GLFWwindow* window = glfwCreateWindow(1280, 720, "nCMCMA Modal Analysis", nullptr, nullptr);
     if (!window) { glfwTerminate(); return; }
     glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        return;
+    }
+
     glfwSwapInterval(1); 
 
     IMGUI_CHECKVERSION();

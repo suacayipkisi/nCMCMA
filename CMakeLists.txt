@@ -9,7 +9,30 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenMP REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
+
+include(FetchContent)
+
+FetchContent_Declare(
+    glad
+    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+    GIT_TAG        v0.1.36
+)
+FetchContent_MakeAvailable(glad)
+
+find_package(glfw3 QUIET)
+if(NOT glfw3_FOUND)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+    )
+    FetchContent_MakeAvailable(glfw)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -46,8 +69,9 @@ target_include_directories(ncmcma PRIVATE
     ${imgui_SOURCE_DIR}/backends
 )
 target_link_libraries(ncmcma PRIVATE 
-    Eigen3::Eigen 
-    OpenMP::OpenMP_CXX 
+    glad
     glfw 
     OpenGL::GL
+    OpenMP::OpenMP_CXX 
+    Eigen3::Eigen
 )
