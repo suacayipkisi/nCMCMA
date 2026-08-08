@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.0...3.31)
 project(ncmcma VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenMP REQUIRED)
@@ -16,6 +18,7 @@ FetchContent_Declare(
     glad
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
     GIT_TAG        v0.1.36
+    SYSTEM
 )
 FetchContent_MakeAvailable(glad)
 
