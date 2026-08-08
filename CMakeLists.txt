@@ -68,6 +68,7 @@ target_include_directories(ncmcma PRIVATE
     ${imgui_SOURCE_DIR} 
     ${imgui_SOURCE_DIR}/backends
 )
+
 target_link_libraries(ncmcma PRIVATE 
     glad
     glfw 

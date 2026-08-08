@@ -3,13 +3,12 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-#include "gui.h"
-#include "../engine/simEngine.h"
-
 #include <iostream>
 #include <thread>
 #include <vector>
+
+#include "gui.h"
+#include "../engine/simEngine.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"

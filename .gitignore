@@ -2,7 +2,6 @@ build/
 build-linux/
 build-win/
 data/
-
 AppDir/
 dist/
 

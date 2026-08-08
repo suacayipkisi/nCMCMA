@@ -49,7 +49,7 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 
 ## Screenshot From GUI
 
-![4x4x4 Cube Sample Visualization](./final_verison.gif)
+![4x4x4 Cube Sample Visualization](./final_verison_v0.1.0-alpha.gif.gif)
 
 ---
 
