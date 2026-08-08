@@ -8,18 +8,30 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenMP REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG docking
+)
+FetchContent_MakeAvailable(imgui)
 
 set(SOURCES
 	main.cpp
 	src/matrixOperations/stdEigenValueSolver.cpp
 	src/modalAnalysis/massMatrix.cpp
 	src/modalAnalysis/stiffMatrix.cpp
-)
-
-set(HEADERS
-	src/modalAnalysis/massMatrix.h
-	src/modalAnalysis/stiffMatrix.h
-	src/matrixOperations/stdEigenValueSolver.h
+    src/engine/simEngine.cpp
+    src/gui/gui.cpp
+	${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -28,4 +40,14 @@ add_compile_options(-O3 -march=native)
 add_link_options(-O3)
 
 add_executable(ncmcma ${SOURCES})
-target_link_libraries(ncmcma PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)
+
+target_include_directories(ncmcma PRIVATE 
+    ${imgui_SOURCE_DIR} 
+    ${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(ncmcma PRIVATE 
+    Eigen3::Eigen 
+    OpenMP::OpenMP_CXX 
+    glfw 
+    OpenGL::GL
+)

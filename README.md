@@ -1,11 +1,12 @@
-# nCMMA (non-Continuous-Material Cube Modal Analysis)
+# nCMCMA (non-Continuous-Material Cube Modal Analysis)
 
-nCMMA is designed for the structural modal analysis and dynamic response simulation of 3D non-continuous material cube structures (mass-spring lattice models).
+nCMCMA is designed for the structural modal analysis and dynamic response simulation of 3D non-continuous material cube structures (mass-spring lattice models).
 
 The software constructs global Mass ($M$), Stiffness ($K$), and Rayleigh Damping ($C$) matrices for a discretized $N \times N \times N$ mass-spring system with 6 degrees of freedom (DOF) per mass element. It solves state-space eigenvalue problems and computes frequency-domain receptance matrices and dynamic displacements ($q = \alpha(\omega) \cdot Q$) with OpenMP multi-threading acceleration.  
 
-Calculates first 10 natural frequency if they are different than each other 0.001 Hz.
-(older version were calculating all natural frequencies but for higher mass numbers this takes too long time and uses insane memory. for example 16x16x16 lattice were take 19GB RAM for calculation and really long time. The main reason is huge sparse matrixes, actually this is the main issue of finite element calculations.)
+Calculates natural frequency with iteration, older verison were calculating all natural frequencies but this takes too much time and really high RAM usage and segmentation faults (for massNum = 16 -> ~19GB, but now it takes a few houndred MB). This iteration results may looks like natural freq. values too close but this is not a mistake. This model is not fem(finite element method). The lattice structure causes this. Still if you increase massNum, time increase exponentally but ram usage is npt that much because of the iteration algotihm.
+
+The simulation may not show the springs but I draw an example.
 
 ---
 
@@ -25,26 +26,32 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 * **Receptance Matrix Computation:** Computes frequency-dependent transfer function matrices $\boldsymbol{\alpha}(\omega) = (\mathbf{K} - \omega^2 \mathbf{M} + i \omega \mathbf{C})^{-1}$ using Eigen's `FullPivLU` solver.
 * **Dynamic Load Response ($q = \alpha(\omega) Q$):** Calculates complex spatial displacements and magnitudes across all DOFs under applied dynamic forces.
 * **Multi-Threaded Parallel Execution:** Utilizes **OpenMP** and **Eigen** parallelization, automatically scaled to half of system hardware threads for optimal performance and thermal efficiency.
-* **Formatted File Output:** Exports full displacement results and applied force vector to `displacement` file.
+* **visualization:** with imgui and opengl, colored spheres (doesn't animates strings for better visualization, only sphere masses)
 
 ---
 
 ## Project Structur
 
 ```text
-nCMMA/
+nCMCMA/
 ├── CMakeLists.txt              # Build configuration with C++23, Eigen3 & OpenMP
 ├── main.cpp                    # Application entry point & parallel analysis runner
 ├── 2_2_2_cubeSample.png        # Sample lattice model diagram
 └── src/
+    ├── engine
+    │   ├── simEngine.cpp           # parallel analysis runner
+    │   └── simEngine.h
+    ├── gui
+    │   ├── gui.cpp                 # visualize the results
+    │   └── gui.h
     ├── matrixOperations/
-    │   ├── stdEigenValueSolver.h   # Eigen-based eigenvalue solver & frequency extractor
-    │   └── stdEigenValueSolver.cpp
+    │   ├── stdEigenValueSolver.h
+    │   └── stdEigenValueSolver.cpp # Eigen-based eigenvalue solver & frequency extractor
     └── modalAnalysis/
-        ├── massMatrix.h           # Mass matrix generation (6 DOF / node)
-        ├── massMatrix.cpp
-        ├── stiffMatrix.h          # Stiffness matrix assembly
-        └── stiffMatrix.cpp
+        ├── massMatrix.h
+        ├── massMatrix.cpp          # Mass matrix generation (6 DOF / node)
+        ├── stiffMatrix.h
+        └── stiffMatrix.cpp         # Stiffness matrix assembly
 ```
 
 ---
@@ -57,13 +64,43 @@ nCMMA/
   * **Eigen 3.3+** (Linear algebra library)
   * **OpenMP** (Multi-threading support)
 
-### Installing Dependencies (probably not necessary)
+### Installing Dependencies
+
+There are 4 dependencies: openGL for animation, imGui for gui, Eigen for matrix computations, openMP for multithreading.
 
 #### Ubuntu/Debian
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake libeigen3-dev libomp-dev
+sudo apt install -y build-essential cmake ninja-build g++-13 libeigen3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev libomp-dev
+```
+
+#### Fedora
+
+```bash
+sudo dnf check-update
+sudo dnf install -y @development-tools cmake ninja-build gcc-c++ eigen3-devel glfw-devel mesa-libGL-devel mesa-libGLU-devel libomp-devel
+```
+
+#### Arch/CachyOS
+
+```bash
+sudo pacman -Syu --needed base-devel cmake ninja gcc eigen glfw-x11 mesa openmp
+```
+
+#### Windows
+
+in PowerShell
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+```
+
+```powershell
+.\vcpkg install eigen3:x64-windows
+.\vcpkg install glfw3:x64-windows
 ```
 
 ---
@@ -77,15 +114,18 @@ cmake -B build -S .
 cmake --build build
 ```
 
+for windows
+
+```powershell
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+cmake --build build --config Debug
+```
+
 ### 2. Run Execution
 
 ```bash
-./build/ncmma
+./build/ncmcma
 ```
-
-### 3. Output Files Generated
-
-* `displacement.txt`: Dynamic displacement response per DOF showing real/imaginary parts and overall magnitude ($|q|$).
 
 ---
 
