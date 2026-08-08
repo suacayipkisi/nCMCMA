@@ -75,9 +75,11 @@ unsigned int compileShader(unsigned int type, const char* source) {
     int result;
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (!result) {
-        char length[512];
-        glGetShaderInfoLog(id, 512, nullptr, length);
-        std::cerr << "Shader Hatasi: " << length << '\n';
+        int logLength = 0;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logLength);
+        std::vector<char> infoLog(logLength);
+        glGetShaderInfoLog(id, logLength, &logLength, infoLog.data());
+        std::cerr << "Shader Hatasi: " << infoLog.data() << '\n';
         glDeleteShader(id);
         return 0;
     }

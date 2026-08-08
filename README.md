@@ -12,7 +12,7 @@ Pre-compiled binary releases for Linux and Windows are available under [GitHub R
 
 | Platform | File | Quick Run Command |
 | :--- | :--- | :--- |
-| **Linux** (All Distros) | [`ncmcma-v0.1.0-alpha-x86_64.AppImage`](https://github.com/suacayipkisi/nCMCMA/releases/download/v0.1.0-alpha/ncmcma-v0.1.0-alpha-x86_64.AppImage) | `chmod +x ncmcma-*.AppImage && ./ncmcma-*.AppImage` |
+| **Linux** (All Distros) | [`ncmcma-v0.1.0-alpha-linux-x64.tar.gz `](https://github.com/suacayipkisi/nCMCMA/releases/download/v0.1.0-alpha/ncmcma-v0.1.0-alpha-linux-x64.tar.gz) | Copy this whole command in terminal: `cd Downloads && tar -xzvf ncmcma-v0.1.0-alpha-linux-x64.tar.gz && ./ncmcma-v0.1.0-alpha-linux-x64/run.sh` |
 | **Windows** (10/11 x64) | [`ncmcma-v0.1.0-alpha-win64.zip`](https://github.com/suacayipkisi/nCMCMA/releases/download/v0.1.0-alpha/ncmcma-v0.1.0-alpha-win64.zip) | Extract `.zip` and run `ncmcma.exe` |
 
 ---
@@ -43,7 +43,7 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 * **Receptance Matrix Computation:** Computes frequency-dependent transfer function matrices $\boldsymbol{\alpha}(\omega) = (\mathbf{K} - \omega^2 \mathbf{M} + i \omega \mathbf{C})^{-1}$ using Eigen's `FullPivLU` solver.
 * **Dynamic Load Response ($q = \alpha(\omega) Q$):** Calculates complex spatial displacements and magnitudes across all DOFs under applied dynamic forces.
 * **Multi-Threaded Parallel Execution:** Utilizes **OpenMP** and **Eigen** parallelization, automatically scaled to half of system hardware threads for optimal performance and thermal efficiency.
-* **visualization:** with imgui and opengl, colored spheres (doesn't animates strings for better visualization, only sphere masses)
+* **Visualization:** with imgui and opengl, colored spheres according to their displacement. Shows element has higher displacement red (doesn't animates strings for better look, only sphere mass-elements)
 
 ---
 
