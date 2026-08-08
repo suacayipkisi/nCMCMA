@@ -315,6 +315,20 @@ void initAndRunGui() {
 
         bool hasData = (currentDisp.size() == (size_t)(6 * N * N * N));
 
+        float maxDispMag = 0.00001f; // 0'a bölme hatasını önlemek için küçük eşik
+        if (hasData) {
+            for (int i = 0; i < N * N * N; ++i) {
+                int baseIdx = i * 6;
+                double dx = currentDisp[baseIdx + 0].real();
+                double dy = currentDisp[baseIdx + 1].real();
+                double dz = currentDisp[baseIdx + 2].real();
+                float mag = std::sqrt(dx * dx + dy * dy + dz * dz);
+                if (mag > maxDispMag) {
+                    maxDispMag = mag;
+                }
+            }
+        }
+        
         for (int i = 0; i < N * N * N; ++i) {
             int ix = i % N;
             int iy = (i % N2) / N;
@@ -328,6 +342,7 @@ void initAndRunGui() {
 
             Eigen::Vector3f dynamicTrans(0, 0, 0);
             Eigen::Vector3f dynamicRot(0, 0, 0);
+            float dispMag = 0.0f;
 
             if (hasData) {
                 int baseIdx = i * 6;
@@ -339,6 +354,10 @@ void initAndRunGui() {
                     auto rot = currentDisp[baseIdx + 3 + d];
                     dynamicRot[d] = (float)(rot.real() * std::cos(t) - rot.imag() * std::sin(t)) * animScale;
                 }
+                double dx = currentDisp[baseIdx + 0].real();
+                double dy = currentDisp[baseIdx + 1].real();
+                double dz = currentDisp[baseIdx + 2].real();
+                dispMag = std::sqrt(dx * dx + dy * dy + dz * dz);
             }
 
             Eigen::Affine3f model = Eigen::Affine3f::Identity();
@@ -347,9 +366,24 @@ void initAndRunGui() {
             model.rotate(Eigen::AngleAxisf(dynamicRot.norm(), dynamicRot.normalized().isZero() ? Eigen::Vector3f::UnitX() : dynamicRot.normalized()));
             model.scale(g_params.radius);
 
-            float r = (N > 1) ? static_cast<float>(ix) / (N - 1) : 1.0f;
-            float g = (N > 1) ? static_cast<float>(iy) / (N - 1) : 1.0f;
-            float b = (N > 1) ? static_cast<float>(iz) / (N - 1) : 1.0f;
+            float r, g, b;
+            if (hasData) {
+                // Normalize genlik t: [0.0 (Mavi/Sabit) -> 1.0 (Kırmızı/Max Hareketli)]
+                float normT = std::clamp(dispMag / maxDispMag, 0.0f, 1.0f);
+
+                // Blue -> Green -> Red Jet Renk Skalası
+                r = std::clamp(2.0f * normT - 0.5f, 0.0f, 1.0f);
+                g = std::clamp(1.0f - std::abs(2.0f * normT - 1.0f), 0.0f, 1.0f);
+                b = std::clamp(1.5f - 2.0f * normT, 0.0f, 1.0f);
+            } else {
+                // Veri yoksa eski konum bazlı varsayılan renk
+                r = (N > 1) ? static_cast<float>(ix) / (N - 1) : 1.0f;
+                g = (N > 1) ? static_cast<float>(iy) / (N - 1) : 1.0f;
+                b = (N > 1) ? static_cast<float>(iz) / (N - 1) : 1.0f;
+                r = 0.2f + 0.8f * r;
+                g = 0.2f + 0.8f * g;
+                b = 0.2f + 0.8f * b;
+            }
             
             glUniform3f(colorLoc, 0.2f + 0.8f * r, 0.2f + 0.8f * g, 0.2f + 0.8f * b);
 
