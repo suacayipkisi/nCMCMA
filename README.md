@@ -30,6 +30,12 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 
 ---
 
+## Screenshot From GUI
+
+![4x4x4 Cube Sample Visualization](./final_verison.gif)
+
+---
+
 ## Project Structur
 
 ```text
