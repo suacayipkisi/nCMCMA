@@ -60,45 +60,69 @@ int main() {
 
     std::cout << "Calculating natural frequency using sparse eigenvalue solver...\n";
 
-    const double receptanceFrequency = getNaturalFrequency(sparseM, sparseK, 7);
-    std::cout << "Calculated natural frequency: " << receptanceFrequency << " rad/s\n\n";
+    int shift{};
+    bool equalSituation{true};
+    double wOld{-0.002};
+    for (int i{0}; i<10; ++i){    
+        while(equalSituation){
+            const double wNow = getNaturalFrequency(sparseM, sparseK, (i+shift));
+            if(std::abs(wOld-wNow) < 0.001){
+                shift ++;
+            }
+            else{
+                equalSituation = false;
+                wOld = wNow;
+            }
+        }
+        equalSituation = true;
 
-    const double w = receptanceFrequency;
-    const double w2 = w * w;
+        const double w{wOld};
+        std::cout << "Calculated natural frequency: " << w << " rad/s\n\n";
+        const double w2 = w * w;
 
-    // Build sparse complex dynamic stiffness matrix Z = K - w^2 * M + j * w * (alpha * M + beta * K)
-    std::complex<double> k_coeff(1.0, w * beta);
-    std::complex<double> m_coeff(-w2, w * alpha);
+        // Build sparse complex dynamic stiffness matrix Z = K - w^2 * M + j * w * (alpha * M + beta * K)
+        std::complex<double> k_coeff(1.0, w * beta);
+        std::complex<double> m_coeff(-w2, w * alpha);
 
-    Eigen::SparseMatrix<std::complex<double>> Z = 
-        sparseK.cast<std::complex<double>>() * k_coeff + 
-        sparseM.cast<std::complex<double>>() * m_coeff;
-    
-    std::cout << "Factoring sparse impedance matrix Z (" << dim << "x" << dim << ")...\n";
-    Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double>>> lu;
-    lu.compute(Z);
-    if (lu.info() != Eigen::Success) {
-        std::cerr << "[ERROR]: SparseLU factorization failed!\n";
-        return 1;
+        Eigen::SparseMatrix<std::complex<double>> Z = 
+            sparseK.cast<std::complex<double>>() * k_coeff + 
+            sparseM.cast<std::complex<double>>() * m_coeff;
+        
+        std::cout << "Factoring sparse impedance matrix Z (" << dim << "x" << dim << ")...\n";
+        Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double>>> lu;
+        lu.compute(Z);
+        if (lu.info() != Eigen::Success) {
+            std::cerr << "[ERROR]: SparseLU factorization failed!\n";
+            return 1;
+        }
+
+        // 1. Solve displacement vector q = Z^{-1} * Q
+        std::cout << "Solving displacement vector q...\n";
+        Eigen::VectorXcd Q_vec = Eigen::VectorXcd::Zero(dim);
+        Q_vec(0) = std::complex<double>(1000.0, 0.0);
+        Eigen::VectorXcd q_vec = lu.solve(Q_vec);
+
+        std::string displacementLocation{std::string(MAIN_DIR) + "/displacements/displacement_for_natural_freq_" + std::to_string(i) + ".txt"};
+        std::ofstream dispFile(displacementLocation);
+        if (!dispFile) {
+            std::cerr << "[ERROR]: displacement.txt file cannot be created!\n";
+            return 1;
+        }
+
+        dispFile << "Displacement For Natural Frequency " << w << '\n';
+        dispFile << "Applied force Vector:" << '\n';
+        for (int index{0}; index < (dim/6); ++index){
+            for(int in_index{0}; in_index < 6; ++in_index){
+                dispFile << Q_vec(6*index + in_index) << " ";
+            }
+            dispFile << '\n';
+        }
+        for (std::size_t i = 0; i < dim; ++i) {
+            dispFile << "DOF " << i << ": " << q_vec(i) << " (Magnitude: " << std::abs(q_vec(i)) << ")\n";
+        }
+        std::cout << "[SUCCESS] Displacement vector written to " << displacementLocation << " successfully.\n";
     }
 
-    // 1. Solve displacement vector q = Z^{-1} * Q
-    std::cout << "Solving displacement vector q...\n";
-    Eigen::VectorXcd Q_vec = Eigen::VectorXcd::Zero(dim);
-    Q_vec(0) = std::complex<double>(1000.0, 0.0);
-    Eigen::VectorXcd q_vec = lu.solve(Q_vec);
-
-    std::string displacementLocation{std::string(MAIN_DIR) + "/displacement.txt"};
-    std::ofstream dispFile(displacementLocation);
-    if (!dispFile) {
-        std::cerr << "[ERROR]: displacement.txt file cannot be created!\n";
-        return 1;
-    }
-
-    for (std::size_t i = 0; i < dim; ++i) {
-        dispFile << "DOF " << i << ": " << q_vec(i) << " (Magnitude: " << std::abs(q_vec(i)) << ")\n";
-    }
-    std::cout << "[SUCCESS] Displacement vector written to 'displacement.txt' successfully.\n";
-
+    std::cout << "[SUCCESS] All operations are done!" << '\n';
     return 0;
 }
