@@ -1,5 +1,22 @@
 # nCMCMA (non-Continuous-Material Cube Modal Analysis)
 
+<!-- Release & Downloads Badges -->
+[![GitHub Release](https://img.shields.io/github/v/release/suacayipkisi/nCMCMA?include_prereleases&style=flat-square&color=blue)](https://github.com/suacayipkisi/nCMCMA/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/suacayipkisi/nCMCMA/total?style=flat-square&color=green)](https://github.com/suacayipkisi/nCMCMA/releases)
+
+---
+
+## 📦 Downloads (v0.1.0-alpha)
+
+Pre-compiled binary releases for Linux and Windows are available under [GitHub Releases](https://github.com/suacayipkisi/nCMCMA/releases/tag/v0.1.0-alpha).
+
+| Platform | File | Quick Run Command |
+| :--- | :--- | :--- |
+| **Linux** (All Distros) | [`ncmcma-v0.1.0-alpha-x86_64.AppImage`](https://github.com/suacayipkisi/nCMCMA/releases/download/v0.1.0-alpha/ncmcma-v0.1.0-alpha-x86_64.AppImage) | `chmod +x ncmcma-*.AppImage && ./ncmcma-*.AppImage` |
+| **Windows** (10/11 x64) | [`ncmcma-v0.1.0-alpha-win64.zip`](https://github.com/suacayipkisi/nCMCMA/releases/download/v0.1.0-alpha/ncmcma-v0.1.0-alpha-win64.zip) | Extract `.zip` and run `ncmcma.exe` |
+
+---
+
 nCMCMA is designed for the structural modal analysis and dynamic response simulation of 3D non-continuous material cube structures (mass-spring lattice models).
 
 The software constructs global Mass ($M$), Stiffness ($K$), and Rayleigh Damping ($C$) matrices for a discretized $N \times N \times N$ mass-spring system with 6 degrees of freedom (DOF) per mass element. It solves state-space eigenvalue problems and computes frequency-domain receptance matrices and dynamic displacements ($q = \alpha(\omega) \cdot Q$) with OpenMP multi-threading acceleration.  
