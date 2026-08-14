@@ -119,11 +119,13 @@ in PowerShell
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 .\bootstrap-vcpkg.bat
+.\vcpkg integrate install
 ```
 
 ```powershell
 .\vcpkg install eigen3:x64-windows
 .\vcpkg install glfw3:x64-windows
+.\vcpkg install glad:x64-windows
 ```
 
 ---

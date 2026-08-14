@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <algorithm>
 
 #include "gui.h"
 #include "../engine/simEngine.h"
@@ -87,16 +88,27 @@ unsigned int compileShader(unsigned int type, const char* source) {
 }
 
 void initAndRunGui() {
-    if (!glfwInit()) return;
+    if (!glfwInit()) {
+        std::cerr << "GLFW coudn't started!\n";
+        return;
+    }
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(1280, 720, "nCMCMA Modal Analysis", nullptr, nullptr);
-    if (!window) { glfwTerminate(); return; }
+    if (!window) { 
+        std::cerr << "Window couldn't created!\n";
+        glfwTerminate(); 
+        return; 
+    }
     glfwMakeContextCurrent(window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "GLAD couldn't loaded!\n";
+        glfwDestroyWindow(window);
+        glfwTerminate();
         return;
     }
 
@@ -126,6 +138,18 @@ void initAndRunGui() {
     glAttachShader(program, vs);
     glAttachShader(program, fs);
     glLinkProgram(program);
+
+    int linkStatus;
+    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+    if (!linkStatus) {
+        int logLen = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
+        std::vector<char> log(logLen);
+        glGetProgramInfoLog(program, logLen, nullptr, log.data());
+        std::cerr << "Program Link Error: " << log.data() << '\n';
+        return;
+    }
+
     glDeleteShader(vs);
     glDeleteShader(fs);
 
@@ -135,10 +159,10 @@ void initAndRunGui() {
     const int stacks = 16;
     for(int i = 0; i <= stacks; ++i) {
         float V = i / (float)stacks;
-        float phi = V * M_PI;
+        float phi = V * (float)M_PI;
         for(int j = 0; j <= sectors; ++j) {
             float U = j / (float)sectors;
-            float theta = U * (M_PI * 2);
+            float theta = U * ((float)M_PI * 2.0f);
             float x = std::cos(theta) * std::sin(phi);
             float y = std::cos(phi);
             float z = std::sin(theta) * std::sin(phi);
@@ -178,9 +202,12 @@ void initAndRunGui() {
     float animScale = 1.0f; 
     static int selectedModeIndex = 0;
 
+    if (g_params.massNum <= 0) g_params.massNum = 3;
+    if (g_params.radius <= 0.0f) g_params.radius = 0.05f;
+
     float camRadius = g_params.massNum * g_params.radius * 6.0f;
-    float camYaw = M_PI / 4.0f;
-    float camPitch = M_PI / 6.0f;
+    float camYaw = (float)M_PI / 4.0f;
+    float camPitch = (float)M_PI / 6.0f;
     Eigen::Vector3f camTarget(0.0f, 0.0f, 0.0f);
 
     while (!glfwWindowShouldClose(window)) {
@@ -212,7 +239,7 @@ void initAndRunGui() {
         if (ImGui::CollapsingHeader("Lattice and Material Constants", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::InputInt("Lattice Size (N)", &g_params.massNum);
             ImGui::InputFloat("Sphere Radius (m)", &g_params.radius, 0.001f, 0.01f, "%.4f");
-            ImGui::InputFloat("Denisty (kg/m^3)", &g_params.density);
+            ImGui::InputFloat("Density (kg/m^3)", &g_params.density);
             ImGui::InputFloat("Spring Constant (N/m)", &g_params.stiffnessConst);
         }
 
@@ -245,35 +272,34 @@ void initAndRunGui() {
         }
 
         if (!availableFrequencies.empty()) {
-            if (selectedModeIndex >= availableFrequencies.size()) {
-                selectedModeIndex = availableFrequencies.size() - 1;
+            if (selectedModeIndex >= (int)availableFrequencies.size()) {
+                selectedModeIndex = (int)availableFrequencies.size() - 1;
             }
             
             std::string previewValue = std::to_string(availableFrequencies[selectedModeIndex]) + " Hz";
-            if (ImGui::BeginCombo("Visualited Mod", previewValue.c_str())) {
-                for (int n = 0; n < availableFrequencies.size(); n++) {
-                    const bool is_selected = (selectedModeIndex == n);
-                    std::string itemLabel = "Mod " + std::to_string(n+1) + " : " + std::to_string(availableFrequencies[n]) + " Hz";
+            if (ImGui::BeginCombo("Visualized Mode", previewValue.c_str())) {
+                for (size_t n = 0; n < availableFrequencies.size(); n++) {
+                    const bool is_selected = (selectedModeIndex == (int)n);
+                    std::string itemLabel = "Mode " + std::to_string(n+1) + " : " + std::to_string(availableFrequencies[n]) + " Hz";
                     if (ImGui::Selectable(itemLabel.c_str(), is_selected)) {
-                        selectedModeIndex = n;
+                        selectedModeIndex = (int)n;
                     }
                     if (is_selected) ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
         } else {
-            ImGui::Text("There is not calculated mod yet.");
+            ImGui::Text("No calculated modes yet.");
         }
 
         ImGui::End();
 
-        ImGuiIO& io = ImGui::GetIO();
         if (!io.WantCaptureMouse) { 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
                 camYaw -= io.MouseDelta.x * 0.005f;
                 camPitch += io.MouseDelta.y * 0.005f;
-                if (camPitch > M_PI / 2.0f - 0.01f) camPitch = M_PI / 2.0f - 0.01f;
-                if (camPitch < -M_PI / 2.0f + 0.01f) camPitch = -M_PI / 2.0f + 0.01f;
+                if (camPitch > (float)M_PI / 2.0f - 0.01f) camPitch = (float)M_PI / 2.0f - 0.01f;
+                if (camPitch < -(float)M_PI / 2.0f + 0.01f) camPitch = -(float)M_PI / 2.0f + 0.01f;
             }
             camRadius -= io.MouseWheel * g_params.radius * 2.0f;
             if (camRadius < g_params.radius * 2.0f) camRadius = g_params.radius * 2.0f;
@@ -292,7 +318,7 @@ void initAndRunGui() {
         float camZ = camRadius * std::cos(camPitch) * std::sin(camYaw);
         Eigen::Vector3f eye(camX, camY, camZ);
 
-        float fovRad = 45.0f * (M_PI / 180.0f);
+        float fovRad = 45.0f * ((float)M_PI / 180.0f);
         Eigen::Matrix4f projection = getPerspective(fovRad, (float)renderWidth / (float)display_h, 0.1f, 100.0f);
         Eigen::Matrix4f view = getLookAt(eye, camTarget, Eigen::Vector3f(0, 1, 0));
         
@@ -302,7 +328,7 @@ void initAndRunGui() {
 
         glBindVertexArray(VAO);
 
-        float t = glfwGetTime() * 5.0f;
+        float t = (float)glfwGetTime() * 5.0f;
         float spacing = g_params.radius * 3.0f;
         int N = g_params.massNum;
         int N2 = N * N;
@@ -310,21 +336,21 @@ void initAndRunGui() {
         std::vector<std::complex<double>> currentDisp;
         {
             std::lock_guard<std::mutex> lock(g_simState.dataMutex);
-            if (selectedModeIndex < g_simState.results.size()) {
+            if (selectedModeIndex < (int)g_simState.results.size()) {
                 currentDisp = g_simState.results[selectedModeIndex].displacements;
             }
         }
 
         bool hasData = (currentDisp.size() == (size_t)(6 * N * N * N));
 
-        float maxDispMag = 0.00001f; // 0'a bölme hatasını önlemek için küçük eşik
+        float maxDispMag = 0.00001f;
         if (hasData) {
             for (int i = 0; i < N * N * N; ++i) {
                 int baseIdx = i * 6;
                 double dx = currentDisp[baseIdx + 0].real();
                 double dy = currentDisp[baseIdx + 1].real();
                 double dz = currentDisp[baseIdx + 2].real();
-                float mag = std::sqrt(dx * dx + dy * dy + dz * dz);
+                float mag = (float)std::sqrt(dx * dx + dy * dy + dz * dz);
                 if (mag > maxDispMag) {
                     maxDispMag = mag;
                 }
@@ -359,26 +385,25 @@ void initAndRunGui() {
                 double dx = currentDisp[baseIdx + 0].real();
                 double dy = currentDisp[baseIdx + 1].real();
                 double dz = currentDisp[baseIdx + 2].real();
-                dispMag = std::sqrt(dx * dx + dy * dy + dz * dz);
+                dispMag = (float)std::sqrt(dx * dx + dy * dy + dz * dz);
             }
 
             Eigen::Affine3f model = Eigen::Affine3f::Identity();
             model.translate(basePos + dynamicTrans);
             
-            model.rotate(Eigen::AngleAxisf(dynamicRot.norm(), dynamicRot.normalized().isZero() ? Eigen::Vector3f::UnitX() : dynamicRot.normalized()));
+            float rotNorm = dynamicRot.norm();
+            if (rotNorm > 1e-6f) {
+                model.rotate(Eigen::AngleAxisf(rotNorm, dynamicRot.normalized()));
+            }
             model.scale(g_params.radius);
 
             float r, g, b;
             if (hasData) {
-                // Normalize genlik t: [0.0 (Mavi/Sabit) -> 1.0 (Kırmızı/Max Hareketli)]
                 float normT = std::clamp(dispMag / maxDispMag, 0.0f, 1.0f);
-
-                // Blue -> Green -> Red Jet Renk Skalası
                 r = std::clamp(2.0f * normT - 0.5f, 0.0f, 1.0f);
                 g = std::clamp(1.0f - std::abs(2.0f * normT - 1.0f), 0.0f, 1.0f);
                 b = std::clamp(1.5f - 2.0f * normT, 0.0f, 1.0f);
             } else {
-                // Veri yoksa eski konum bazlı varsayılan renk
                 r = (N > 1) ? static_cast<float>(ix) / (N - 1) : 1.0f;
                 g = (N > 1) ? static_cast<float>(iy) / (N - 1) : 1.0f;
                 b = (N > 1) ? static_cast<float>(iz) / (N - 1) : 1.0f;
@@ -387,10 +412,9 @@ void initAndRunGui() {
                 b = 0.2f + 0.8f * b;
             }
             
-            glUniform3f(colorLoc, 0.2f + 0.8f * r, 0.2f + 0.8f * g, 0.2f + 0.8f * b);
-
+            glUniform3f(colorLoc, r, g, b);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.matrix().data());
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
         }
 
         ImGui::Render();

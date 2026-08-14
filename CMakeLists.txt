@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 CONFIG REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -35,22 +35,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
-include(FetchContent)
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking
+    GIT_TAG        docking
 )
 FetchContent_MakeAvailable(imgui)
 
 set(SOURCES
-	main.cpp
-	src/matrixOperations/stdEigenValueSolver.cpp
-	src/modalAnalysis/massMatrix.cpp
-	src/modalAnalysis/stiffMatrix.cpp
+    main.cpp
+    src/matrixOperations/stdEigenValueSolver.cpp
+    src/modalAnalysis/massMatrix.cpp
+    src/modalAnalysis/stiffMatrix.cpp
     src/engine/simEngine.cpp
     src/gui/gui.cpp
-	${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
@@ -60,12 +59,18 @@ set(SOURCES
 
 add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_compile_options(-O3 -march=native)
-add_link_options(-O3)
+if(MSVC)
+    add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN)
+    add_compile_options(/O2 /arch:AVX2 /fp:fast)
+else()
+    add_compile_options(-O3 -march=native -ffast-math)
+    add_link_options(-O3)
+endif()
 
 add_executable(ncmcma ${SOURCES})
 
 target_include_directories(ncmcma PRIVATE 
+    include
     ${imgui_SOURCE_DIR} 
     ${imgui_SOURCE_DIR}/backends
 )

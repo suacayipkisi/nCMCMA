@@ -15,3 +15,6 @@ displacements/
 *.exe
 *.AppImage
 *.zip
+.clangd
+.yaml
+.ini
