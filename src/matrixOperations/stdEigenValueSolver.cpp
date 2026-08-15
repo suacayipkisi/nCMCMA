@@ -1,4 +1,3 @@
-#include <iostream>
 #include <omp.h>
 #include <cmath>
 #include <algorithm>
@@ -21,7 +20,8 @@ double getNaturalFrequency(
     const Eigen::SparseMatrix<double>& M,
     const Eigen::SparseMatrix<double>& K,
     std::size_t modeIndex
-) {
+)
+{
     const std::size_t dim = K.rows();
     if (dim == 0) return 0.0;
 

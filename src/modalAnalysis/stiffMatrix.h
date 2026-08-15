@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <array>
 #include <cstddef>
 
 #if __has_include(<Eigen/Sparse>)

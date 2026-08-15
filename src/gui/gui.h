@@ -1,8 +1,8 @@
 #pragma once
 
-#include <atomic>
-#include <mutex>
-#include <vector>
-#include <complex>
+#include "../parameters.h"
 
-void initAndRunGui();
+void initAndRunGui(
+    SimulationParameters& parameters, 
+    SimulationState& g_simState
+);

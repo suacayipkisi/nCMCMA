@@ -16,11 +16,9 @@
 #include "../modalAnalysis/stiffMatrix.h"
 #include "../modalAnalysis/massMatrix.h"
 #include "../matrixOperations/stdEigenValueSolver.h"
+#include "../parameters.h"
 
-SimulationParameters g_params;
-SimulationState g_simState;
-
-void runSimulation() {
+void runSimulation(SimulationParameters& g_params, SimulationState& g_simState) {
     g_simState.isRunning = true;
     g_simState.progress = 0.0f;
 
@@ -63,7 +61,7 @@ void runSimulation() {
             break;
         }
 
-        std::cout << "[ENGINE] Findedfrequency: " << currentHz << " Hz (" << w << " rad/s)\n";
+        std::cout << "[ENGINE] Finded frequency: " << currentHz << " Hz (" << w << " rad/s)\n";
 
         const double w2 = w * w;
         std::complex<double> k_coeff(1.0, w * g_params.beta);
@@ -77,7 +75,7 @@ void runSimulation() {
         lu.compute(Z);
         
         if (lu.info() != Eigen::Success) {
-            std::cerr << "[ERROR] Z matrix SparseLU faktorization is unsuccessful!\n";
+            std::cerr << "[ERROR] Z matrix SparseLU factorization is unsuccessful!\n";
             break;
         }
 

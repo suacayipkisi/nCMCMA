@@ -10,6 +10,7 @@
 
 #include "gui.h"
 #include "../engine/simEngine.h"
+#include "../parameters.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -87,7 +88,7 @@ unsigned int compileShader(unsigned int type, const char* source) {
     return id;
 }
 
-void initAndRunGui() {
+void initAndRunGui(SimulationParameters& g_params, SimulationState& g_simState) {
     if (!glfwInit()) {
         std::cerr << "GLFW coudn't started!\n";
         return;
@@ -258,7 +259,7 @@ void initAndRunGui() {
             } else {
                 if (ImGui::Button("Start Simulation")) {
                     selectedModeIndex = 0;
-                    std::thread(runSimulation).detach();
+                    std::thread(runSimulation, std::ref(g_params), std::ref(g_simState)).detach();
                 }
             }
         }

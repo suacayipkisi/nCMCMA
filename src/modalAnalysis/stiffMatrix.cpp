@@ -142,7 +142,8 @@ Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
     const double stiffConst,
     const double radius,
     const int massNum
-) {
+)
+{
     const int totalMassNum{massNum * massNum * massNum};
     std::vector<Eigen::Triplet<double>> triplets;
     triplets.reserve(dim * 45);

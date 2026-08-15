@@ -5,7 +5,8 @@ Eigen::SparseMatrix<double> getSparseMassMatrix(
     const double uniteMass,
     const double radius,
     const int massNum
-) {
+)
+{
     const int totalMassNum{massNum * massNum * massNum};
     Eigen::SparseMatrix<double> M(dim, dim);
     std::vector<Eigen::Triplet<double>> triplets;

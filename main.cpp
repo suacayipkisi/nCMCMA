@@ -8,6 +8,7 @@
 #include <eigen3/Eigen/Dense>
 #endif
 
+#include "src/parameters.h"
 #include "src/gui/gui.h"
 
 int main() {
@@ -16,10 +17,14 @@ int main() {
     omp_set_num_threads(numThreads/2);
     Eigen::setNbThreads(numThreads/2);
 
+    SimulationParameters parameters{};
+
+    SimulationState state{};
+    
     std::cout << "Thread number in system: " << (hardwareThreads)
               << " | Using thread number: " << numThreads << "\n\n";
 
-    initAndRunGui();
+    initAndRunGui(parameters, state);
 
     return 0;
 }
