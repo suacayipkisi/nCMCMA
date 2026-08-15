@@ -18,3 +18,5 @@ displacements/
 .clangd
 .yaml
 .ini
+
+imgui.ini

@@ -35,6 +35,10 @@ Below is an illustration of a $2 \times 2 \times 2$ mass lattice (massNum{2}) co
 
 ---
 
+## Memory WARNING
+
+If you increase lattice size (massNum) more than 16, probably your memory won't be enough and you will take a crash after half an hour. So, consider that this simulatin is only for experimental. Performance and resource usage is not worked on well area. There is a reposity I am working on currently, it will be better about that, actually it will be a finished fem engine, so this project is made for test-education purpose.
+
 ## Features
 
 * **3D Mass-Spring Lattice Generation:** Flexible setup for $N \times N \times N$ discrete cube structures with 6 DOFs per node (3 translational + 3 rotational).
