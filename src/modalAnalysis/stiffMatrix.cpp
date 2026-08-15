@@ -1,3 +1,5 @@
+#include <omp.h>
+
 #include "stiffMatrix.h"
 
 static void fillDiagTriplets(
@@ -141,15 +143,14 @@ Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
     std::size_t dim,
     const double stiffConst,
     const double radius,
-    const int massNum
+    const int massNum,
+    const int numThreads
 )
 {
     const int totalMassNum{massNum * massNum * massNum};
-    std::vector<Eigen::Triplet<double>> triplets;
-    triplets.reserve(dim * 45);
+    const int N2 = massNum * massNum;
 
-    std::array<int, 3> elePos{0, 0, 0};
-    std::array<int, 3> effPos{0, 0, 0};
+    std::vector<std::vector<Eigen::Triplet<double>>> threadTriplets(numThreads);
 
     const std::array<std::array<int, 3>, 6> offsetDirs = {{
         {1, 0, 0}, {-1, 0, 0},
@@ -157,31 +158,56 @@ Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
         {0, 0, 1}, {0, 0, -1}
     }};
 
-    for (int eleID{1}; eleID <= totalMassNum; ++eleID){
-        int idx = eleID - 1;
-        int N2 = massNum * massNum;
-        elePos[0] = idx % massNum;
-        elePos[1] = (idx % N2) / massNum;
-        elePos[2] = idx / N2;
-        fillDiagTriplets(elePos, eleID, triplets, stiffConst, radius, massNum);
+    #pragma omp parallel num_threads(numThreads)
+    {
+        const int threadID = omp_get_thread_num();
+        auto& localTriplets = threadTriplets[threadID];
+        localTriplets.reserve((dim * 45) / numThreads);
 
-        for (const auto& dir : offsetDirs) {
-            effPos[0] = elePos[0] + dir[0];
-            effPos[1] = elePos[1] + dir[1];
-            effPos[2] = elePos[2] + dir[2];
+        std::array<int, 3> elePos{0, 0, 0};
+        std::array<int, 3> effPos{0, 0, 0};
 
-            if (effPos[0] >= 0 && effPos[0] < massNum &&
-                effPos[1] >= 0 && effPos[1] < massNum &&
-                effPos[2] >= 0 && effPos[2] < massNum)
-            {
-                int fidx = effPos[0] + effPos[1] * massNum + effPos[2] * N2;
-                int effID = fidx + 1;
-                fillElementTriplets(elePos, eleID, effPos, effID, triplets, stiffConst, radius);
+        #pragma omp for schedule(static)
+        for (int eleID = 1; eleID <= totalMassNum; ++eleID) {
+            int idx = eleID - 1;
+            elePos[0] = idx % massNum;
+            elePos[1] = (idx % N2) / massNum;
+            elePos[2] = idx / N2;
+            fillDiagTriplets(elePos, eleID, localTriplets, stiffConst, radius, massNum);
+
+            for (const auto& dir : offsetDirs) {
+                effPos[0] = elePos[0] + dir[0];
+                effPos[1] = elePos[1] + dir[1];
+                effPos[2] = elePos[2] + dir[2];
+
+                if (effPos[0] >= 0 && effPos[0] < massNum &&
+                    effPos[1] >= 0 && effPos[1] < massNum &&
+                    effPos[2] >= 0 && effPos[2] < massNum)
+                {
+                    int fidx = effPos[0] + effPos[1] * massNum + effPos[2] * N2;
+                    int effID = fidx + 1;
+                    fillElementTriplets(elePos, eleID, effPos, effID, localTriplets, stiffConst, radius);
+                }
             }
         }
+    }
+    
+    std::size_t totalTripletsSize = 0;
+    for (const auto& tVec : threadTriplets) {
+        totalTripletsSize += tVec.size();
+    }
+
+    std::vector<Eigen::Triplet<double>> triplets;
+    triplets.reserve(totalTripletsSize);
+
+    for (auto& tVec : threadTriplets) {
+        triplets.insert(triplets.end(), 
+                        std::make_move_iterator(tVec.begin()), 
+                        std::make_move_iterator(tVec.end()));
     }
 
     Eigen::SparseMatrix<double> K(dim, dim);
     K.setFromTriplets(triplets.begin(), triplets.end());
+    K.makeCompressed();
     return K;
 }

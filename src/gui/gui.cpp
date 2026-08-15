@@ -258,8 +258,10 @@ void initAndRunGui(SimulationParameters& g_params, SimulationState& g_simState) 
                 ImGui::BeginDisabled(); ImGui::Button("Calculating..."); ImGui::EndDisabled();
             } else {
                 if (ImGui::Button("Start Simulation")) {
-                    selectedModeIndex = 0;
-                    std::thread(runSimulation, std::ref(g_params), std::ref(g_simState)).detach();
+                    if (!g_simState.isRunning) {selectedModeIndex = 0;}
+                    std::thread([params = g_params, &simState = g_simState]() mutable {
+                        runSimulation(params, simState);
+                    }).detach();
                 }
             }
         }

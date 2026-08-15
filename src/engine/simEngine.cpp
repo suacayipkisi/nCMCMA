@@ -28,32 +28,36 @@ void runSimulation(SimulationParameters& g_params, SimulationState& g_simState) 
     }
 
     const double mass = (4.0 / 3.0) * std::numbers::pi * std::pow(g_params.radius, 3) * g_params.density;
-    const std::size_t dim = 6 * g_params.massNum * g_params.massNum * g_params.massNum;
-
+    const std::size_t totalMassNum = g_params.massNum * g_params.massNum * g_params.massNum;
+    const std::size_t dim = 6 * totalMassNum;
+    
     std::cout << "[ENGINE] Creating sparse mass and stiffness matrix...\n";
     Eigen::SparseMatrix<double> sparseM = getSparseMassMatrix(dim, mass, g_params.radius, g_params.massNum);
-    Eigen::SparseMatrix<double> sparseK = getSparseStiffnessMatrix(dim, g_params.stiffnessConst, g_params.radius, g_params.massNum);
+    Eigen::SparseMatrix<double> sparseK = getSparseStiffnessMatrix(dim, g_params.stiffnessConst, g_params.radius, g_params.massNum, g_params.numThreads);
 
     int shift = 0;
-    bool equalSituation = true;
-    double wOld = -0.002;
+    double wOld = -1.0;
     int iter = 0;
 
     std::cout << "[ENGINE] Frequency searching starting. Aim: " << g_params.maxTargetHz << " Hz\n";
 
     while (true) {
-        while (equalSituation) {
-            const double wNow = getNaturalFrequency(sparseM, sparseK, (iter + shift));
-            if (std::abs(wOld - wNow) < 0.001) {
-                shift++;
-            } else {
-                equalSituation = false;
-                wOld = wNow;
-            }
+        std::size_t targetMode = static_cast<std::size_t>(iter + shift);
+        
+        if (targetMode >= dim) {
+            std::cout << "[ENGINE] Reached max degrees of freedom. Stopping.\n";
+            break;
         }
-        equalSituation = true;
 
-        const double w = wOld;
+        const double wNow = getNaturalFrequency(sparseM, sparseK, targetMode);
+
+        if (wNow < 1e-3 || (wOld > 0.0 && std::abs(wOld - wNow) < 0.01)) {
+            shift++;
+            continue;
+        }
+
+        wOld = wNow;
+        const double w = wNow;
         const double currentHz = w / (2.0 * std::numbers::pi);
 
         if (currentHz > g_params.maxTargetHz) {
@@ -61,15 +65,16 @@ void runSimulation(SimulationParameters& g_params, SimulationState& g_simState) 
             break;
         }
 
-        std::cout << "[ENGINE] Finded frequency: " << currentHz << " Hz (" << w << " rad/s)\n";
+        std::cout << "[ENGINE] Found frequency: " << currentHz << " Hz (" << w << " rad/s)\n";
 
         const double w2 = w * w;
         std::complex<double> k_coeff(1.0, w * g_params.beta);
         std::complex<double> m_coeff(-w2, w * g_params.alpha);
-
-        Eigen::SparseMatrix<std::complex<double>> Z = 
-            sparseK.cast<std::complex<double>>() * k_coeff + 
+        
+        Eigen::SparseMatrix<std::complex<double>> Z(dim, dim);
+        Z = sparseK.cast<std::complex<double>>() * k_coeff + 
             sparseM.cast<std::complex<double>>() * m_coeff;
+        Z.makeCompressed();
 
         Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double>>> lu;
         lu.compute(Z);
@@ -92,8 +97,7 @@ void runSimulation(SimulationParameters& g_params, SimulationState& g_simState) 
         }
 
         iter++;
-        
-        g_simState.progress = static_cast<float>(currentHz / g_params.maxTargetHz);
+        g_simState.progress = static_cast<float>(std::min(1.0, currentHz / g_params.maxTargetHz));
     }
 
     g_simState.isRunning = false;

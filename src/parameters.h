@@ -11,6 +11,7 @@ struct ModeResult {
 };
 
 struct SimulationParameters {
+    const int numThreads;
     int massNum{};
     float alpha{};
     float beta{};
@@ -18,16 +19,6 @@ struct SimulationParameters {
     float density{};
     float stiffnessConst{};
     float maxTargetHz{};
-
-    SimulationParameters():
-        massNum{4},
-        alpha{0.02287f},
-        beta{0.00000578f},
-        radius{0.01f},
-        density{7800.0f},
-        stiffnessConst{1000.0f},
-        maxTargetHz{50.0f}
-    {}
 };
 
 struct SimulationState {

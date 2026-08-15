@@ -62,9 +62,9 @@ add_compile_definitions(MAIN_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 if(MSVC)
     add_compile_definitions(NOMINMAX _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN)
-    add_compile_options(/O2 /arch:AVX2 /fp:fast)
+    add_compile_options(/O2 /arch:AVX2)
 else()
-    add_compile_options(-O3 -march=native -ffast-math)
+    add_compile_options(-O3 -march=native)
     add_link_options(-O3)
 endif()
 

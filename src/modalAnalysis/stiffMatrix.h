@@ -12,5 +12,6 @@ Eigen::SparseMatrix<double> getSparseStiffnessMatrix(
     std::size_t dim,
     const double stiffConst,
     const double radius,
-    const int massNum
+    const int massNum,
+    const int numThreads
 );
