@@ -12,11 +12,11 @@
 
 int main() {
     const unsigned int hardwareThreads{std::thread::hardware_concurrency()};
-    const int numThreads{static_cast<int>(hardwareThreads > 0 ? hardwareThreads : 4)};
-    omp_set_num_threads(numThreads);
-    Eigen::setNbThreads(1);
+    const int numThreads{static_cast<int>(hardwareThreads)};
+    omp_set_num_threads(numThreads/2);
+    Eigen::setNbThreads(numThreads/2);
 
-    std::cout << "Thread number in system: " << (hardwareThreads > 0 ? hardwareThreads : 1)
+    std::cout << "Thread number in system: " << (hardwareThreads)
               << " | Using thread number: " << numThreads << "\n\n";
 
     initAndRunGui();
