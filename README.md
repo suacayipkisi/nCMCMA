@@ -102,8 +102,11 @@ sudo apt install -y build-essential cmake ninja-build g++-13 libeigen3-dev libgl
 
 ```bash
 sudo dnf check-update
-sudo dnf install -y @development-tools cmake ninja-build gcc-c++ eigen3-devel glfw-devel mesa-libGL-devel mesa-libGLU-devel libomp-devel
+sudo dnf install -y @development-tools cmake ninja-build gcc-c++ eigen3-devel glfw-devel mesa-libGL-devel mesa-libGLU-devel libomp-devel glew-devel freeglut-devel
+sudo dnf install wayland-devel libwayland-client libwayland-cursor libwayland-egl libxkbcommon-devel
+sudo dnf install libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel libXext-devel
 ```
+warning: I did not check all of them is necessary or not and asked AI and it gave me those, probably most of them is unnecesary. I'm sorry to not checking but fedora feels a bit weird to me about packages.
 
 #### Arch/CachyOS
 
